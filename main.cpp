@@ -37,9 +37,8 @@ int main(void)
     BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.5f + wallHeight/2, 16.0f +wallWidth/2}};
 
     while (!WindowShouldClose()){
-
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
-                          IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyPressed(KEY_SPACE));
         temp.updateEntities(GetFrameTime());
         vector<Bullet>& ref = *temp.getEntities();
         for(int i = 0; i <temp.getEntities()->size();i++){

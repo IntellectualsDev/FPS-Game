@@ -6,7 +6,7 @@
 #include "Bullet.h"
 #include <raymath.h>
 
-void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot) {
+void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space) {
 
     UpdateCameraPro(&camera,
                     (Vector3){
@@ -26,7 +26,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         cout << "SHOOT!" << endl;
-        Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.1f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.2f,0.2f,0.2f},
+        Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.1f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
                     true);
 //        temp.getBulletModel().transform =  MatrixRotateXYZ((Vector3){ DEG2RAD*temp.getVelocity().x, DEG2RAD*temp.getVelocity().y, DEG2RAD*temp.getVelocity().z});
         entities.push_back(temp);
@@ -53,11 +53,11 @@ Vector3 Player::camera_direction(Camera *tcamera) {
 
 void Player::updateEntities(float dt) {
     for (int i = 0; i < entities.size(); i++) {
-
+        //Vector3Subtract(entities[i].getPosition(),this->position)
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*3));
+                    Vector3Scale(entities[i].getVelocity(), dt*7));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
