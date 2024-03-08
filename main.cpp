@@ -20,11 +20,11 @@ int main(void)
     Player temp((Vector3){0,2,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
 
 
-    const int screenWidth = GetMonitorWidth(GetCurrentMonitor());
-    const int screenHeight = GetMonitorHeight(GetCurrentMonitor());
+    const int screenWidth = 500;
+    const int screenHeight = 500;
 
     InitWindow(screenWidth, screenHeight, "Shooter Game");
-    ToggleFullscreen();
+
 
     SetTargetFPS(60);
 
@@ -38,7 +38,7 @@ int main(void)
 
     while (!WindowShouldClose()){
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
-                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyPressed(KEY_SPACE));
+                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE));
         temp.updateEntities(GetFrameTime());
         vector<Bullet>& ref = *temp.getEntities();
         for(int i = 0; i <temp.getEntities()->size();i++){

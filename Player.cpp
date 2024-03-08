@@ -7,22 +7,55 @@
 #include <raymath.h>
 
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space) {
+    if(!grounded && position.y == 2.0f){
+        grounded= true;
+    }
+    if(space && grounded){
+        grounded = false;
+    } else if(space && !grounded){
+        //do nothing
+    }
 
-    UpdateCameraPro(&camera,
-                    (Vector3){
-                            (w)*0.1f -      // Move forward-backward
-                            (s)*0.1f,
-                            (d)*0.1f -   // Move right-left
-                            (a)*0.1f,
-                            0.0f                                                // Move up-down
-                    },
-                    (Vector3){
-                            mouseDelta.x*0.1f,                            // Rotation: yaw
-                            mouseDelta.y*0.1f,                            // Rotation: pitch
-                            0.0f                                                // Rotation: roll
-                    },
-                    GetMouseWheelMove()*2.0f);
-    position = camera.position;
+    cout << space <<  " " << camera.position.y << " "<< position.y << endl;
+    //TODO check for case to set grounded == true
+    //TODO implement grounded/jumping movement
+    if(grounded){
+        UpdateCameraPro(&camera,
+                        (Vector3){
+                                (w)*0.1f -      // Move forward-backward
+                                (s)*0.1f,
+                                (d)*0.1f -   // Move right-left
+                                (a)*0.1f,
+                                (space)*0.0f                                                // Move up-down
+                        },
+                        (Vector3){
+                                mouseDelta.x*0.1f,                            // Rotation: yaw
+                                mouseDelta.y*0.1f,                            // Rotation: pitch
+                                0.0f                                                // Rotation: roll
+                        },
+                        GetMouseWheelMove()*2.0f);
+        position = camera.position;
+    } else {
+        UpdateCameraPro(&camera,
+                        (Vector3){
+                                (w)*0.1f -      // Move forward-backward
+                                (s)*0.1f,
+                                (d)*0.1f -   // Move right-left
+                                (a)*0.1f,
+                                (space)*0.1f                                                // Move up-down
+                        },
+                        (Vector3){
+                                mouseDelta.x*0.1f,                            // Rotation: yaw
+                                mouseDelta.y*0.1f,                            // Rotation: pitch
+                                0.0f                                                // Rotation: roll
+                        },
+                        GetMouseWheelMove()*2.0f);
+        position = camera.position;
+    }
+
+
+
+
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         cout << "SHOOT!" << endl;

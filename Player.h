@@ -46,6 +46,8 @@ public:
     vector<Bullet>* getEntities();
     Vector3 getPosition();
 private:
+    float Gravity = -1.0f;
+    float jump = 10.0f;
     bool grounded = true;
     BoundingBox playerBox;
     float coolDown = 0;
