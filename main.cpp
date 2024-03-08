@@ -20,11 +20,13 @@ int main(void)
     Player temp((Vector3){0,2,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
 
 
-    const int screenWidth = 500;
-    const int screenHeight = 500;
 
-    InitWindow(screenWidth, screenHeight, "Shooter Game");
 
+    InitWindow(0, 0, "Shooter Game");
+    const int screenWidth = GetMonitorWidth(0);
+    const int screenHeight = GetMonitorHeight(0);
+    CloseWindow();
+    InitWindow(screenWidth-200, screenHeight-200, "Shooter Game");
 
     SetTargetFPS(60);
 
@@ -35,10 +37,11 @@ int main(void)
     BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.5f + wallHeight/2, 16.0f +wallWidth/2}};
-
+    Vector3 prevPosition;
     while (!WindowShouldClose()){
+        prevPosition = temp.getPosition();
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
-                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE));
+                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime());
         temp.updateEntities(GetFrameTime());
         vector<Bullet>& ref = *temp.getEntities();
         for(int i = 0; i <temp.getEntities()->size();i++){
@@ -46,7 +49,20 @@ int main(void)
                 cout << "Hit!" << endl;
                 ref[i].kill();
                 cout << ref[i].getAlive() << endl;
+            }else if(CheckCollisionBoxes(ref[i].getBulletBox(),wallBox2)){
+                cout << "Hit!" << endl;
+                ref[i].kill();
+                cout << ref[i].getAlive() << endl;
+            } if(CheckCollisionBoxes(ref[i].getBulletBox(),wallBox3)){
+                cout << "Hit!" << endl;
+                ref[i].kill();
+                cout << ref[i].getAlive() << endl;
             }
+        }
+        if(CheckCollisionBoxes(temp.getPlayerBox(),wallBox1)){
+            temp.setPosition(prevPosition);
+            cout << "player collision" << endl;
+            temp.getCamera()->position = prevPosition;
         }
 
         BeginDrawing();

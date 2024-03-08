@@ -30,6 +30,7 @@ public:
         camera.fovy = 60.0f;                                // Camera field-of-view Y
         camera.projection = CAMERA_PERSPECTIVE;
         alive = true;
+        JumpTimer = 0.0f;
         playerBox = (BoundingBox){(Vector3){position.x - hitbox.x/2,
                                             position.y - hitbox.y/2,
                                             position.z - hitbox.z/2},
@@ -39,15 +40,19 @@ public:
     };
     void updateEntities(float dt);
     Vector3 camera_direction(Camera *tcamera);
-    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space);
+    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt);
     Camera3D * getCamera();
     Vector3 getHitBox();
     void setCameraMode(int temp);
     vector<Bullet>* getEntities();
     Vector3 getPosition();
+    void startJumpTimer(float dt);
+    float getJumpTimer();
+    BoundingBox getPlayerBox();
+    void setPosition(Vector3 temp);
 private:
     float Gravity = -1.0f;
-    float jump = 10.0f;
+    float Jump = 1.0f;
     bool grounded = true;
     BoundingBox playerBox;
     float coolDown = 0;
@@ -58,4 +63,5 @@ private:
     Vector3 hitbox{};
     bool alive;
     int cameraMode = CAMERA_FIRST_PERSON;
+    float JumpTimer;
 };
