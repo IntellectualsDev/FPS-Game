@@ -24,19 +24,22 @@ int main(void)
     float wallHeight = 5.0f;
     float wallLength = 32.0f;
     float floorLength = 32.0f;
-    BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.5f + wallHeight/2, 16.0f +wallWidth/2}};
+    BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
+    BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
+    BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.0f + wallHeight/2, 16.0f +wallWidth/2}};
     BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-0.5,-floorLength/2},(Vector3){floorLength/2,0.5,floorLength/2}};
     vector<BoundingBox> terrainVector = {wallBox1,wallBox2,wallBox3,floorBox};
-
+    BoundingBox topBox1 = (BoundingBox){(Vector3){-16.0f - 0.5, 4.5f, 0.0f -wallLength/2},(Vector3){-16.0f + 0.5, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
+    BoundingBox topBox2 = (BoundingBox){(Vector3){16.0f - 0.5, 4.5f, 0.0f -wallLength/2},(Vector3){16.0f + 0.5, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
+    BoundingBox topBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 4.5f, 16.0f -0.5},(Vector3){0.0f + wallLength/2, 2.5f + wallHeight/2, 16.0f + 0.5}};
+    vector<BoundingBox> topBoxVector = {topBox1,topBox2,topBox3};
     //init window
     //TODO shit code
     InitWindow(0, 0, "Shooter Game");
     const int screenWidth = GetMonitorWidth(0);
     const int screenHeight = GetMonitorHeight(0);
     CloseWindow();
-    InitWindow(screenWidth-200, screenHeight-200, "Shooter Game");
+    InitWindow(screenWidth-400, screenHeight-400, "Shooter Game");
 
     //set fps
     SetTargetFPS(60);
@@ -52,9 +55,10 @@ int main(void)
         prevPosition = temp.getPosition();
         //read local inputs and update player positions/spawn bullet entities
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
-                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition);
+                          IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector);
         //update bullet entities position based on a multiple of the frame time(delta T)
         temp.updateEntities(GetFrameTime());
+
 
         //check for all Collisions
         for(int j = 0;j <terrainVector.size();j++){
@@ -69,9 +73,6 @@ int main(void)
             //check for player collisions with terrain
 
             //if bottom of player is through the top of a terrain
-            if(temp.getPlayerBox().min.y <= terrainVector[j].max.y) {
-
-            }
                 //set grounded to true and update player position
             //if top of player is through bottom of terrain
             //if left of player is through right of terrain
@@ -90,6 +91,9 @@ int main(void)
         //draw bounding boxes
         for(int i = 0; i < terrainVector.size();i++){
             DrawBoundingBox(terrainVector[i],BLACK);
+        }
+        for(int i = 0; i < topBoxVector.size();i++){
+            DrawBoundingBox(topBoxVector[i],RED);
         }
         //draw player bounding box
         DrawBoundingBox(temp.getPlayerBox(),PINK);

@@ -40,7 +40,7 @@ public:
     };
     void updateEntities(float dt);
     Vector3 camera_direction(Camera *tcamera);
-    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition);
+    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector);
     Camera3D * getCamera();
     Vector3 getHitBox();
     void setCameraMode(int temp);
@@ -54,9 +54,11 @@ public:
     BoundingBox getPlayerBox();
     void setPosition(Vector3 temp);
 private:
-    float Gravity = -1.0f;
+    bool topCollision;
+    bool colliding;
+    float Gravity = -0.05;
     float Jump = 1.0f;
-    bool grounded = true;
+    bool grounded = false;
     BoundingBox playerBox;
     float coolDown = 0;
     vector<Bullet> entities = {};
