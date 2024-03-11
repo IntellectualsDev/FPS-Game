@@ -40,10 +40,13 @@ public:
     };
     void updateEntities(float dt);
     Vector3 camera_direction(Camera *tcamera);
-    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt);
+    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition);
     Camera3D * getCamera();
     Vector3 getHitBox();
     void setCameraMode(int temp);
+    void setGrounded(bool temp);
+    bool getGrounded();
+    Vector3 getVelocity();
     vector<Bullet>* getEntities();
     Vector3 getPosition();
     void startJumpTimer(float dt);

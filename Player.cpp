@@ -6,23 +6,11 @@
 #include "Bullet.h"
 #include <raymath.h>
 
-void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt) {
+void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition) {
     //TODO check collision here to map objects
+    velocity = Vector3Subtract(position,prevPosition);
 
-    if(!grounded && position.y <= 2.0f ){
-        grounded= true;
-        position.y =2.0f;
-        camera.position.y = 2.0f;
-        JumpTimer = 1.0f;
-    }
-    if(space && grounded){
-        startJumpTimer(dt);
-    }
-    if(!grounded){
-        JumpTimer += 6.0f*dt;
-    }
 
-//    cout << space <<  " " << camera.position.y << " "<< position.y << endl;
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
     if(grounded){
@@ -74,11 +62,12 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
 
     playerBox.min = (Vector3){position.x - hitbox.x/2,
-                              position.y - hitbox.y/2,
+                              position.y - hitbox.y/2 -1,
                               position.z - hitbox.z/2};
     playerBox.max = (Vector3){position.x + hitbox.x/2,
-                              position.y + hitbox.y/2,
+                              position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
+    cout << position.y << endl;
 }
 Vector3 Player::getHitBox() {
     return this->hitbox;
@@ -133,8 +122,7 @@ float Player::getJumpTimer() {
 }
 
 void Player::startJumpTimer(float dt) {
-    grounded = false;
-    JumpTimer = 1.0f;
+
 }
 
 BoundingBox Player::getPlayerBox() {
@@ -143,5 +131,17 @@ BoundingBox Player::getPlayerBox() {
 
 void Player::setPosition(Vector3 temp) {
     position = temp;
+}
+
+void Player::setGrounded(bool temp) {
+    grounded = temp;
+}
+
+bool Player::getGrounded() {
+    return grounded;
+}
+
+Vector3 Player::getVelocity() {
+    return velocity;
 }
 
