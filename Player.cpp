@@ -9,7 +9,7 @@
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector) {
     //TODO check collision here to map objects
 
-    cout << velocity.y << endl;
+
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
         setGrounded(true);
     }
@@ -21,6 +21,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         grounded = false;
     }else{
         grounded = false;
+        space = false;
     }
     if(space && grounded){
         grounded = false;
@@ -31,6 +32,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }else{
         velocity = (Vector3){(w)*0.1f -(s)*0.1f,0,(d)*0.1f -(a)*0.1f};
     }
+
 
 
 
@@ -63,14 +65,23 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 
     for(int i = 0;i < terrainList.size();i++){
         if(i <3){
-            if(CheckCollisionBoxes(playerBox,topBoxVector[i])){
+            if(CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space){
                 position.y = 2+topBoxVector[i].max.y;
                 camera.position.y = position.y;
                 topCollision = true;
-            }else if(CheckCollisionBoxes(getPlayerBox(),terrainList[i]) && i != 3){
-                position = prevPosition;
+            }else if(CheckCollisionBoxes(getPlayerBox(),terrainList[i]) && i != 3 && !space){
+                if(playerBox.max.x >= terrainList[i].min.x){
+                    position.x = terrainList[i].max.x + hitbox.x/2;
+                } else if(playerBox.min.x <= terrainList[i].max.x){
+                    position.x = terrainList[i].min.x - hitbox.x/2;
+                }
+//                if(playerBox.max.z >= terrainList[i].min.z){
+//                    position.z = terrainList[i].min.z - hitbox.z/2;
+//                } else if(playerBox.min.z <= terrainList[i].max.z){
+//                    position.z = terrainList[i].max.z + hitbox.z/2;
+//                }
                 camera.position = position;
-                colliding = true;
+
             }
         }
 
