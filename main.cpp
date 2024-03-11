@@ -80,7 +80,7 @@ int main(void)
             //if back of player is through front of terrain
 
             }
-        }
+
 
         //begin rendering
         BeginDrawing();
