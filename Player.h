@@ -21,6 +21,7 @@ class Player {
 
 public:
     Player(Vector3 temp_postion, Vector3 temp_velocity, Vector3 temp_hitbox1){
+        cameraRotation = QuaternionIdentity();
         position = temp_postion;
         velocity = temp_velocity;
         hitbox = temp_hitbox1;
@@ -56,13 +57,14 @@ public:
     BoundingBox getPlayerBox();
     void setPosition(Vector3 temp);
 private:
-    Vector3 separationVector;
-    bool topCollision;
-    bool colliding;
+    Quaternion cameraRotation{};
+    Vector3 separationVector{};
+    bool topCollision{};
+    bool colliding{};
     float Gravity = -0.05;
     float Jump = 0.8f;
     bool grounded = false;
-    BoundingBox playerBox;
+    BoundingBox playerBox{};
     float coolDown = 0;
     vector<Bullet> entities = {};
     Camera3D camera{};

@@ -8,7 +8,12 @@
 #include <algorithm>
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector) {
     //TODO check collision here to map objects
-
+    static bool isInitialized = false;
+    if (!isInitialized)
+    {
+        cameraRotation = QuaternionIdentity();
+        isInitialized = true;
+    }
 
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
         setGrounded(true);
@@ -34,8 +39,9 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
 
 
-
-
+//    cameraRotation = QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 0.0f, 1.0f, 0.0f }, mouseDelta.x * dt * 0.1f));
+//    cameraRotation = QuaternionNormalize(QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 1.0f, 0.0f, 0.0f }, mouseDelta.y * dt * 0.1f)));
+    cameraRotation = QuaternionNormalize(QuaternionMultiply(QuaternionFromAxisAngle({ 1.0f, 0.0f, 0.0f }, mouseDelta.y * dt * 0.1f), QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 0.0f, 1.0f, 0.0f }, mouseDelta.x * dt * 0.1f))));
 
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
