@@ -7,7 +7,7 @@
 #include <raymath.h>
 #include <algorithm>
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch) {
-
+//Continious collision detection.
 
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
         setGrounded(true);
