@@ -6,14 +6,8 @@
 #include "Bullet.h"
 #include <raymath.h>
 #include <algorithm>
-void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector) {
-    //TODO check collision here to map objects
-    static bool isInitialized = false;
-    if (!isInitialized)
-    {
-        cameraRotation = QuaternionIdentity();
-        isInitialized = true;
-    }
+void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch) {
+
 
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
         setGrounded(true);
@@ -21,9 +15,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     else if(topCollision){
         grounded = true;
         topCollision = false;
-    }else if (colliding && velocity.y != 0){
-        colliding = false;
-        grounded = false;
     }else{
         grounded = false;
         space = false;
@@ -32,19 +23,15 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         grounded = false;
         velocity = (Vector3){(w)*0.15f -(s)*0.15f,((space)*Jump),(d)*0.15f -(a)*0.15f};
     }else if (!grounded){
-
         velocity = (Vector3){(w)*0.15f -(s)*0.15f,velocity.y + Gravity,(d)*0.15f -(a)*0.15f};
     }else{
         velocity = (Vector3){(w)*0.15f -(s)*0.15f,0,(d)*0.15f -(a)*0.15f};
     }
-    Vector3 prevTarget = camera.target;
-
-
 
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
     UpdateCameraPro(&camera,
-                    (Vector3){velocity.x,velocity.z,velocity.y},
+                    Vector3Multiply((Vector3){velocity.x,velocity.z,velocity.y},(Vector3){(sprint+1.0f), (sprint+1.0f), 1.0f}),
                     (Vector3){
                             mouseDelta.x*0.1f,                            // Rotation: yaw
                             mouseDelta.y*0.1f,                            // Rotation: pitch
@@ -61,6 +48,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         cout << "SHOOT!" << endl;
         Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
                     true);
+        //TODO look into ray casting
 //        temp.getBulletModel().transform =  MatrixRotateXYZ((Vector3){ DEG2RAD*temp.getVelocity().x, DEG2RAD*temp.getVelocity().y, DEG2RAD*temp.getVelocity().z});
         entities.push_back(temp);
         //TODO deque object instead of vector
@@ -113,7 +101,7 @@ void Player::updateEntities(float dt) {
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*5));
+                    Vector3Scale(entities[i].getVelocity(), dt*10));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
