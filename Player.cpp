@@ -5,7 +5,7 @@
 #include "Player.h"
 #include "Bullet.h"
 #include <raymath.h>
-
+#include <algorithm>
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector) {
     //TODO check collision here to map objects
 
@@ -25,12 +25,12 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
     if(space && grounded){
         grounded = false;
-        velocity = (Vector3){(w)*0.1f -(s)*0.1f,((space)*Jump),(d)*0.1f -(a)*0.1f};
+        velocity = (Vector3){(w)*0.3f -(s)*0.3f,((space)*Jump),(d)*0.3f -(a)*0.3f};
     }else if (!grounded){
 
-        velocity = (Vector3){(w)*0.1f -(s)*0.1f,velocity.y + Gravity,(d)*0.1f -(a)*0.1f};
+        velocity = (Vector3){(w)*0.3f -(s)*0.3f,velocity.y + Gravity,(d)*0.3f -(a)*0.3f};
     }else{
-        velocity = (Vector3){(w)*0.1f -(s)*0.1f,0,(d)*0.1f -(a)*0.1f};
+        velocity = (Vector3){(w)*0.3f -(s)*0.3f,0,(d)*0.3f -(a)*0.3f};
     }
 
 
@@ -70,17 +70,18 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                 camera.position.y = position.y;
                 topCollision = true;
             }else if(CheckCollisionBoxes(getPlayerBox(),terrainList[i]) && i != 3 && !space){
-                if(playerBox.max.x >= terrainList[i].min.x){
-                    position.x = terrainList[i].max.x + hitbox.x/2;
-                } else if(playerBox.min.x <= terrainList[i].max.x){
-                    position.x = terrainList[i].min.x - hitbox.x/2;
-                }
+//                if(playerBox.max.x >= terrainList[i].min.x){
+//                    position.x = terrainList[i].max.x + hitbox.x/2;
+//                } else if(playerBox.min.x <= terrainList[i].max.x){
+//                    position.x = terrainList[i].min.x - hitbox.x/2;
+//                }
 //                if(playerBox.max.z >= terrainList[i].min.z){
 //                    position.z = terrainList[i].min.z - hitbox.z/2;
 //                } else if(playerBox.min.z <= terrainList[i].max.z){
 //                    position.z = terrainList[i].max.z + hitbox.z/2;
 //                }
-                camera.position = position;
+//                camera.position = position;
+                position = Vector3Add(Vector3Scale(Vector3Subtract(position,prevPosition),3*dt),position);
 
             }
         }
@@ -118,7 +119,7 @@ void Player::updateEntities(float dt) {
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*10));
+                    Vector3Scale(entities[i].getVelocity(), dt*50));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
@@ -136,6 +137,55 @@ void Player::updateEntities(float dt) {
     }
     coolDown -= dt*2;
 
+}
+bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector) {
+    // Check if the player's bounding box is not entirely to the left of the wall
+    bool notLeftOfWall = playerBB.max.x >= wallBB.min.x;
+    float leftSeparation = wallBB.min.x - playerBB.max.x;
+
+    // Check if the player's bounding box is not entirely to the right of the wall
+    bool notRightOfWall = playerBB.min.x <= wallBB.max.x;
+    float rightSeparation = wallBB.max.x - playerBB.min.x;
+
+    // Check if the player's bounding box is not entirely above the wall
+    bool notAboveWall = playerBB.max.y >= wallBB.min.y;
+    float aboveSeparation = wallBB.min.y - playerBB.max.y;
+
+    // Check if the player's bounding box is not entirely below the wall
+    bool notBelowWall = playerBB.min.y <= wallBB.max.y;
+    float belowSeparation = wallBB.max.y - playerBB.min.y;
+
+    // Check if the player's bounding box is not entirely in front of the wall
+    bool notInFrontOfWall = playerBB.max.z >= wallBB.min.z;
+    float frontSeparation = wallBB.min.z - playerBB.max.z;
+
+    // Check if the player's bounding box is not entirely behind the wall
+    bool notBehindWall = playerBB.min.z <= wallBB.max.z;
+    float behindSeparation = wallBB.max.z - playerBB.min.z;
+
+    // If all conditions are true, then there is a collision
+    if (notLeftOfWall && notRightOfWall && notAboveWall && notBelowWall && notInFrontOfWall && notBehindWall) {
+        // Calculate the minimum separation vector
+        float minSeparation = std::min({ abs(leftSeparation), abs(rightSeparation), abs(aboveSeparation), abs(belowSeparation), abs(frontSeparation), abs(behindSeparation)});
+
+        if (minSeparation == abs(leftSeparation)) {
+            separationVector = { leftSeparation, 0.0f, 0.0f };
+        } else if (minSeparation == abs(rightSeparation)) {
+            separationVector = { -rightSeparation, 0.0f, 0.0f };
+        } else if (minSeparation == abs(aboveSeparation)) {
+            separationVector = { 0.0f, aboveSeparation, 0.0f };
+        } else if (minSeparation == abs(belowSeparation)) {
+            separationVector = { 0.0f, -belowSeparation, 0.0f };
+        } else if (minSeparation == abs(frontSeparation)) {
+            separationVector = { 0.0f, 0.0f, frontSeparation };
+        } else {
+            separationVector = { 0.0f, 0.0f, -behindSeparation };
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 Vector3 Player::getPosition() {
@@ -172,4 +222,6 @@ bool Player::getGrounded() {
 Vector3 Player::getVelocity() {
     return velocity;
 }
+
+
 

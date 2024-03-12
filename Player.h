@@ -11,7 +11,8 @@
 #include "vector"
 #include <raylib.h>
 #include <raymath.h>
-#endif //GAME1_PLAYER_H
+#endif
+//GAME1_PLAYER_H
 //TODO implement player collision and hitbox, potentially uI too or atleast hands and a gun
 //TODO test implementation of maps and collisions with those
 using namespace std;
@@ -38,6 +39,7 @@ public:
                                             position.y + hitbox.y/2,
                                             position.z + hitbox.z/2}};
     };
+    bool CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector);
     void updateEntities(float dt);
     Vector3 camera_direction(Camera *tcamera);
     void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector);
@@ -57,7 +59,7 @@ private:
     bool topCollision;
     bool colliding;
     float Gravity = -0.05;
-    float Jump = 1.0f;
+    float Jump = 0.8f;
     bool grounded = false;
     BoundingBox playerBox;
     float coolDown = 0;
