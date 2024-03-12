@@ -37,11 +37,9 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }else{
         velocity = (Vector3){(w)*0.15f -(s)*0.15f,0,(d)*0.15f -(a)*0.15f};
     }
+    Vector3 prevTarget = camera.target;
 
 
-//    cameraRotation = QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 0.0f, 1.0f, 0.0f }, mouseDelta.x * dt * 0.1f));
-//    cameraRotation = QuaternionNormalize(QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 1.0f, 0.0f, 0.0f }, mouseDelta.y * dt * 0.1f)));
-    cameraRotation = QuaternionNormalize(QuaternionMultiply(QuaternionFromAxisAngle({ 1.0f, 0.0f, 0.0f }, mouseDelta.y * dt * 0.1f), QuaternionMultiply(cameraRotation, QuaternionFromAxisAngle({ 0.0f, 1.0f, 0.0f }, mouseDelta.x * dt * 0.1f))));
 
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
@@ -58,7 +56,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 
 
 
-
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         cout << "SHOOT!" << endl;
@@ -71,13 +68,15 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 
     for(int i = 0;i < terrainList.size();i++){
         if(i <3){
+            //TODO fix this
             if(CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space){
-                position.y = 2+topBoxVector[i].max.y;
+                position.y = 2+topBoxVector[i].max.y;//bad code
                 camera.position.y = position.y;
                 topCollision = true;
             }else if(CheckCollision(playerBox,terrainList[i],separationVector)){
                 position = Vector3Add(position,separationVector);
                 camera.position = position;
+                camera.target = Vector3Add(camera.target,separationVector);
             }
         }
 
