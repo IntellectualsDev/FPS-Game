@@ -25,12 +25,12 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
     if(space && grounded){
         grounded = false;
-        velocity = (Vector3){(w)*0.3f -(s)*0.3f,((space)*Jump),(d)*0.3f -(a)*0.3f};
+        velocity = (Vector3){(w)*0.15f -(s)*0.15f,((space)*Jump),(d)*0.15f -(a)*0.15f};
     }else if (!grounded){
 
-        velocity = (Vector3){(w)*0.3f -(s)*0.3f,velocity.y + Gravity,(d)*0.3f -(a)*0.3f};
+        velocity = (Vector3){(w)*0.15f -(s)*0.15f,velocity.y + Gravity,(d)*0.15f -(a)*0.15f};
     }else{
-        velocity = (Vector3){(w)*0.3f -(s)*0.3f,0,(d)*0.3f -(a)*0.3f};
+        velocity = (Vector3){(w)*0.15f -(s)*0.15f,0,(d)*0.15f -(a)*0.15f};
     }
 
 
@@ -69,20 +69,9 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                 position.y = 2+topBoxVector[i].max.y;
                 camera.position.y = position.y;
                 topCollision = true;
-            }else if(CheckCollisionBoxes(getPlayerBox(),terrainList[i]) && i != 3 && !space){
-//                if(playerBox.max.x >= terrainList[i].min.x){
-//                    position.x = terrainList[i].max.x + hitbox.x/2;
-//                } else if(playerBox.min.x <= terrainList[i].max.x){
-//                    position.x = terrainList[i].min.x - hitbox.x/2;
-//                }
-//                if(playerBox.max.z >= terrainList[i].min.z){
-//                    position.z = terrainList[i].min.z - hitbox.z/2;
-//                } else if(playerBox.min.z <= terrainList[i].max.z){
-//                    position.z = terrainList[i].max.z + hitbox.z/2;
-//                }
-//                camera.position = position;
-                position = Vector3Add(Vector3Scale(Vector3Subtract(position,prevPosition),3*dt),position);
-
+            }else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+                position = Vector3Add(position,separationVector);
+                camera.position = position;
             }
         }
 
@@ -119,7 +108,7 @@ void Player::updateEntities(float dt) {
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*50));
+                    Vector3Scale(entities[i].getVelocity(), dt*5));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
@@ -145,7 +134,7 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
 
     // Check if the player's bounding box is not entirely to the right of the wall
     bool notRightOfWall = playerBB.min.x <= wallBB.max.x;
-    float rightSeparation = wallBB.max.x - playerBB.min.x;
+    float rightSeparation =  - wallBB.max.x + playerBB.min.x;
 
     // Check if the player's bounding box is not entirely above the wall
     bool notAboveWall = playerBB.max.y >= wallBB.min.y;
@@ -161,7 +150,7 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
 
     // Check if the player's bounding box is not entirely behind the wall
     bool notBehindWall = playerBB.min.z <= wallBB.max.z;
-    float behindSeparation = wallBB.max.z - playerBB.min.z;
+    float behindSeparation =  - wallBB.max.z + playerBB.min.z;
 
     // If all conditions are true, then there is a collision
     if (notLeftOfWall && notRightOfWall && notAboveWall && notBelowWall && notInFrontOfWall && notBehindWall) {

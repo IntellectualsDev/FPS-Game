@@ -56,6 +56,7 @@ public:
     BoundingBox getPlayerBox();
     void setPosition(Vector3 temp);
 private:
+    Vector3 separationVector;
     bool topCollision;
     bool colliding;
     float Gravity = -0.05;

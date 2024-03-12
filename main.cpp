@@ -23,7 +23,7 @@ int main(void)
     float wallWidth = 1.0f;
     float wallHeight = 5.0f;
     float wallLength = 32.0f;
-    float floorLength = 32.0f;
+    float floorLength = 50.0f;
     BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.0f + wallHeight/2, 16.0f +wallWidth/2}};
@@ -65,7 +65,7 @@ int main(void)
             for(int i = 0; i <temp.getEntities()->size();i++){
                 //check for bullet collisions with all terrain
                 if(CheckCollisionBoxes(ref[i].getBulletBox(),terrainVector[j])) {
-                    cout << "Hit!" << endl;
+                    cout << "Hit:" << ref[i].getPosition().x << " " << ref[i].getPosition().y  << " " << ref[i].getPosition().z <<  endl;
                     ref[i].kill();
                     cout << ref[i].getAlive() << endl;
                 }
@@ -99,7 +99,7 @@ int main(void)
         DrawBoundingBox(temp.getPlayerBox(),PINK);
         //draw terrain and bullet entities
         //TODO render based on if it is in players FOV
-        DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 32.0f, 32.0f }, LIGHTGRAY); // Draw ground
+        DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 50.0f, 50.0f }, LIGHTGRAY); // Draw ground
         DrawCube((Vector3){ -16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, BLUE);     // Draw a blue wall
         DrawCube((Vector3){ 16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, LIME);      // Draw a green wall
         DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, 5.0f, 1.0f, GOLD);      // Draw a yellow wall
