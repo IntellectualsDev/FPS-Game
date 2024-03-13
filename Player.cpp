@@ -21,23 +21,23 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
     if(space && grounded){
         grounded = false;
-        velocity = (Vector3){(w)*0.15f -(s)*0.15f,((space)*Jump),(d)*0.15f -(a)*0.15f};
+        velocity = (Vector3){(w)* dt*4  -(s)*dt*4 ,((space)*Jump*10*dt),(d)*dt*4 -(a)*dt*4 };
     }else if (!grounded){
-        velocity = (Vector3){(w)*0.15f -(s)*0.15f,velocity.y + Gravity,(d)*0.15f -(a)*0.15f};
+        velocity = (Vector3){(w)*dt*4 -(s)*dt*4 ,velocity.y + Gravity*dt*10,(d)*dt*4  -(a)*dt*4 };
     }else{
-        velocity = (Vector3){(w)*0.15f -(s)*0.15f,0,(d)*0.15f -(a)*0.15f};
+        velocity = (Vector3){(w)*dt*4  -(s)*dt*4 ,0,(d)*dt*4  -(a)*dt*4 };
     }
 
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
     UpdateCameraPro(&camera,
-                    Vector3Multiply((Vector3){velocity.x,velocity.z,velocity.y},(Vector3){(sprint+1.0f), (sprint+1.0f), 1.0f}),
+                    Vector3Multiply((Vector3){velocity.x,velocity.z,velocity.y},(Vector3){(sprint+1.0f), (sprint+1.0f), 1.0f}),//SHIT
                     (Vector3){
-                            mouseDelta.x*0.1f,                            // Rotation: yaw
-                            mouseDelta.y*0.1f,                            // Rotation: pitch
+                            mouseDelta.x*dt*2.0f ,                            // Rotation: yaw
+                            mouseDelta.y*dt*2.0f,                            // Rotation: pitch
                             0.0f                                                // Rotation: roll
                     },
-                    GetMouseWheelMove()*2.0f);
+                    GetMouseWheelMove()*dt *2.0f);
     position = camera.position;
 
 
