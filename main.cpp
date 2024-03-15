@@ -17,8 +17,11 @@
 //------------------------------------------------------------------------------------
 int main(void)
 {
+
     //init local player object
     Player temp((Vector3){0,2,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
+    //TODO start the output and input threads
+//    Executor<outputState> outputThread(temp.getOutputBuffer(),false);
     //init terrain vector
     float wallWidth = 1.0f;
     float wallHeight = 5.0f;
@@ -118,6 +121,7 @@ int main(void)
 
 
         EndDrawing();
+
     }
 
     CloseWindow();        // Close window and OpenGL context

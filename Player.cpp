@@ -4,8 +4,35 @@
 
 #include "Player.h"
 #include "Bullet.h"
+
 #include <raymath.h>
 #include <algorithm>
+//TODO IMPLEMENT CIRCULAR BUFFER OF HISTORY OF PREDICTIONS
+//make a class that implements this so its easier to genralize
+//one buffer includes history of predictions from the last ack'd packet(updated by server from input buffer)
+//one buffer is for the out buffer handled by the output thread and size is detrmined based on tick rate
+//TODO IMPLEMENT OUTPUT BUFFER FOR PACKETS
+//render player locally same as before
+//send a packet every (MATH) or if a collision/shoot has been encountered
+//put the packet into the output buffer (queue)
+//output thread handles sending
+//packet format includes previous inputs inorder to mitigate packet loss
+//send tick number and dt and tick (on join most likely)
+//TODO IMPLEMENT INPUT BUFFER FOR PACKETS
+//on reception of a packet read the header (idk)
+//on SNAPSHOT:
+    //parse the packet and place the other player packet into its input buffer
+    //parse the packet and find the part relating to the local player
+    //check the tick number of the packet and (MATH) determine which local tick that is with the dt parameter
+    //check the packet you locally predicted against the received packet and if they are the same then set the tail of the buffer to that packet
+    //if the states are different then you must revert to that state
+//TODO INTERPOLATE OTHER PLAYER
+//make a class inheriting entity and define it to only be updated according to packest recieved from the server
+//it should have a buffer (queue) of snapshot packets from the server and render a (MATH) amount of time behind the most recently recieved packet
+//it should have x y z positions and direction x y z
+//it also has a vector of bullet entities that will be rendered in the main loop
+//once you pull out a packet look into the queue and see where the next position should be and interpolate to that position
+    //this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch) {
 //Continious collision detection.
 

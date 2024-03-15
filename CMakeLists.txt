@@ -21,7 +21,7 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
     endif()
 endif()
 
-add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp)
+add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp CircularBuffer.cpp Executor.cpp)
 
 target_link_libraries(${PROJECT_NAME} raylib)
 

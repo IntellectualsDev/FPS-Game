@@ -11,17 +11,24 @@
 #include "vector"
 #include <raylib.h>
 #include <raymath.h>
+#include "CircularBuffer.h"
+#include "Executor.h"
+
 #endif
 //GAME1_PLAYER_H
 //TODO implement player collision and hitbox, potentially uI too or atleast hands and a gun
 //TODO test implementation of maps and collisions with those
 using namespace std;
+struct outputState{
 
+};
+struct inputState{
+
+};
 class Player {
 
 public:
     Player(Vector3 temp_postion, Vector3 temp_velocity, Vector3 temp_hitbox1){
-        cameraRotation = QuaternionIdentity();
         position = temp_postion;
         velocity = temp_velocity;
         hitbox = temp_hitbox1;
@@ -39,6 +46,8 @@ public:
                                   (Vector3){position.x + hitbox.x/2,
                                             position.y + hitbox.y/2,
                                             position.z + hitbox.z/2}};
+//        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
+        //size needs to be max allowable rtt
     };
     bool CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector);
     void updateEntities(float dt);
@@ -56,13 +65,21 @@ public:
     float getJumpTimer();
     BoundingBox getPlayerBox();
     void setPosition(Vector3 temp);
+
+//
+//    CircularBuffer<outputState>* getOutputBuffer(){
+//        return &outputBuffer;
+//    }
+//    CircularBuffer<inputState>* getInputBuffer(){
+//        return &inputBuffer;
+//    }
 private:
-    Quaternion cameraRotation{};
+//    CircularBuffer<outputState> outputBuffer;
+//    CircularBuffer<inputState> inputBuffer;
     Vector3 separationVector{};
     bool topCollision{};
-    bool colliding{};
-    float Gravity = -0.05;
-    float Jump = 0.8f;
+    float Gravity = -0.08;
+    float Jump = 2.0f;
     bool grounded = false;
     BoundingBox playerBox{};
     float coolDown = 0;
@@ -72,6 +89,5 @@ private:
     Vector3 velocity{};
     Vector3 hitbox{};
     bool alive;
-    int cameraMode = CAMERA_FIRST_PERSON;
     float JumpTimer;
 };
