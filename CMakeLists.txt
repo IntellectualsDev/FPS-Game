@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 project(FPS-Game)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 set(RAYLIB_VERSION 5.0)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
@@ -20,10 +21,23 @@ if (NOT raylib_FOUND) # If there's none, fetch and build raylib
         add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
     endif()
 endif()
+include_directories("C:/Users/Joseph/Desktop/Intellectuals/FPS-Game/DevEnv/flatbuffers/include")
+include_directories("C:/Users/Joseph/Desktop/Intellectuals/FPS-Game/DevEnv/Enet Headers/include")
+link_directories(C:/Users/Joseph/Desktop/Intellectuals/FPS-Game/Dev Libs/"Dev_Libs")
 
-add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp CircularBuffer.cpp Executor.cpp)
+find_library(ENET_LIBRARY NAMES enet.a PATHS "Dev_Libs")
+if(NOT ENET_LIBRARY)
+    MESSAGE(FATAL_ERROR "ENet library not found")
+endif()
+
+message(STATUS "ENet library found: ${ENET_LIBRARY}")
+
+
+
+add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp CircularBuffer.cpp Executor.cpp game_state_generated.h game_state.fbs)
 
 target_link_libraries(${PROJECT_NAME} raylib)
+target_link_libraries(${PROJECT_NAME} ${ENET_LIBRARY} ws2_32 winmm)
 
 # Web Configurations
 if (${PLATFORM} STREQUAL "Web")

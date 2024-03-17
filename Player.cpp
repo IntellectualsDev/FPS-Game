@@ -48,11 +48,11 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     }
     if(space && grounded){
         grounded = false;
-        velocity = (Vector3){(w)* dt*4  -(s)*dt*4 ,((space)*Jump*10*dt),(d)*dt*4 -(a)*dt*4 };
+        velocity = (Vector3){((w)-(s))*dt*4 ,((space)*Jump*10*dt),((d)-(a))*dt*4 };
     }else if (!grounded){
-        velocity = (Vector3){(w)*dt*4 -(s)*dt*4 ,velocity.y + Gravity*dt*10,(d)*dt*4  -(a)*dt*4 };
+        velocity = (Vector3){((w)-(s))*dt*4 ,velocity.y + Gravity*dt*10,((d)-(a))*dt*4 };
     }else{
-        velocity = (Vector3){(w)*dt*4  -(s)*dt*4 ,0,(d)*dt*4  -(a)*dt*4 };
+        velocity = (Vector3){((w)-(s))*dt*4 ,0,((d)-(a))*dt*4 };
     }
 
     //TODO check for case to set grounded == true

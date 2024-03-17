@@ -6,11 +6,12 @@
 #define GAME1_PLAYER_H
 
 #include <raylib.h>
+#include <raymath.h>
+
+
 #include <iostream>
 #include "Bullet.h"
 #include "vector"
-#include <raylib.h>
-#include <raymath.h>
 #include "CircularBuffer.h"
 #include "Executor.h"
 
@@ -19,6 +20,25 @@
 //TODO implement player collision and hitbox, potentially uI too or atleast hands and a gun
 //TODO test implementation of maps and collisions with those
 using namespace std;
+struct FPSClientState {
+    float dt{};
+    Vector3 separationVector{};
+    bool topCollision = false;
+    float Gravity = -0.05;
+    float Jump = 0.8f;
+    bool grounded = false;
+    bool space;
+    BoundingBox playerBox{};
+    Vector3 hitBox{};
+    float coolDown = 0;
+    vector<Bullet> entities = {};
+    Camera3D camera = {0};
+    Vector3 position = (Vector3){0,2,1};
+    Vector3 velocity = (Vector3){0,0,0};
+    Vector3 hitbox = (Vector3){1.0f,2.0f,1.0f};
+    bool alive = true;
+    int cameraMode = CAMERA_FIRST_PERSON;
+};
 struct outputState{
 
 };

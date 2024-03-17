@@ -1,7 +1,7 @@
 //
 // Created by josep on 2/14/2024.
 //
-
+#include "raylib.h"
 #include "Bullet.h"
 
 void Bullet::UpdatePosition(float x, float y, float z) {

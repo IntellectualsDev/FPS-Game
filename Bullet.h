@@ -4,8 +4,10 @@
 
 #ifndef GAME1_BULLET_H
 #define GAME1_BULLET_H
-
+namespace raylib{
 #include <raylib.h>
+}
+
 #include <iostream>
 
 using namespace std;

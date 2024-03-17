@@ -1,0 +1,108 @@
+// defined to mirror RayLib's Vector3 def
+struct Vector3 {
+    x: float;
+    y: float;
+    z: float;
+}
+
+struct Vector2 {
+    x: float;
+    y: float;
+}
+
+// defined to mirror RayLib's BoundingBox def
+struct BoundingBox {
+    min: Vector3;
+    max: Vector3;
+}
+
+//TODO: define a Raylib Model in the future (many dependencies need to be defined)
+
+// Define the enums
+enum PacketType : byte {
+    Join,
+    Input,
+    Leave,
+    JoinResult,
+    GlobalState,
+    Timeout
+}
+
+struct Endpoint {
+    address: uint;
+    port: uint;
+}
+
+// for both the client and server
+struct Tick{
+    tick_number: uint;
+    dt: float;
+}
+
+table Camera3D {
+    position: Vector3;
+    target: Vector3;
+    up: Vector3;
+    fovy: float;
+    projection: int;
+}
+
+// Define the contents of an Entity
+table Entity {
+    entity_id: uint;
+    entity_label: string;
+    position: Vector3;
+    facing: Vector3;
+    velocity: Vector3;
+    alive: bool;
+}
+
+// Define the state of a Client
+table Client {
+    endpoint: Endpoint;
+    tick: Tick;
+    client_uid: uint;
+    alive: bool;
+    sprint: bool;
+   // crouch: bool;
+    grounded: bool;
+    cooldown: float;
+    position: Vector3;
+    facing: Vector3;
+    velocity: Vector3;
+
+    entities:[Entity];
+}
+
+table Input {
+    w: bool;
+    a: bool;
+    s: bool;
+    d: bool;
+    mouse_delta: Vector2;
+    shoot: bool;
+    space: bool;
+    dt: float;
+    previous_position: Vector3;
+    sprint: bool;
+    crouch: bool;
+    //implement future support for sliding
+}
+
+table GlobalState {
+    client_state:[Client];
+}
+
+union PacketPayload {
+    Input,
+    GlobalState,
+}
+
+table Packet {
+    packet_type: PacketType;
+    endpoint: Endpoint;
+    tick: Tick;
+    payload: PacketPayload;
+}
+
+root_type Packet;

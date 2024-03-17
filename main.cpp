@@ -1,14 +1,16 @@
+
+
 #include <iostream>
-#include "raylib.h"
-#include <raymath.h>
+
 #if defined(PLATFORM_WEB)
 #include <emscripten/emscripten.h>
 #include "vector"
 #endif
-
+#include "raylib.h"
+#include <raymath.h>
 #include "Player.h"
 #include "Bullet.h"
-
+#include <enet/enet.h>
 
 
 
@@ -17,6 +19,19 @@
 //------------------------------------------------------------------------------------
 int main(void)
 {
+
+    //TODO
+    //implement join sequence
+
+    if(enet_initialize() != 0){
+        fprintf(stderr, "An error occured");
+        return EXIT_FAILURE;
+    }
+    atexit (enet_deinitialize);
+    //TODO
+    //assign stuff based on server
+    //also interpolate
+    FPSClientState player2;
 
     //init local player object
     Player temp((Vector3){0,2,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
@@ -41,7 +56,7 @@ int main(void)
     InitWindow(0, 0, "Shooter Game");
     const int screenWidth = GetMonitorWidth(0);
     const int screenHeight = GetMonitorHeight(0);
-    CloseWindow();
+    Rl_CloseWindow();
     InitWindow(screenWidth-400, screenHeight-400, "Shooter Game");
 
     //set fps
@@ -55,6 +70,9 @@ int main(void)
     //Main Loop
     while (!WindowShouldClose()){
         //get previous position
+        //TODO
+        //implement checking incoming packets against past packet buffer and update client position based off that
+
         prevPosition = temp.getPosition();
         //read local inputs and update player positions/spawn bullet entities
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
@@ -124,7 +142,7 @@ int main(void)
 
     }
 
-    CloseWindow();        // Close window and OpenGL context
+    Rl_CloseWindow();        // Close window and OpenGL context
 
     return 0;
 }
