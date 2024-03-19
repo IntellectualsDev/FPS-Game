@@ -13,7 +13,7 @@
 #include <enet/enet.h>
 #include "Transmitter.h"
 #include "DummyClient.h"
-
+#include "Gateway.h"
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -52,7 +52,8 @@ int main(void)
 
     PacketBuffer outputBuffer(consoleMutex);
     Transmitter transmitter("192.168.56.1",6565,outputBuffer,consoleMutex);
-
+    PacketBuffer inputBuffer(consoleMutex);
+    Gateway gateway("192.168.56.1",5808,inputBuffer);
     //TODO
     //implement join sequence
 
@@ -96,6 +97,7 @@ int main(void)
     vector<Bullet>& ref = *temp.getEntities();
     //Main Loop
     transmitter.start();
+    gateway.start();
     int tick = 1;
     while (!WindowShouldClose()){
         //get previous position
@@ -115,7 +117,7 @@ int main(void)
         const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
         auto dest = CreateDestPoint(builder,destAddr,5450);
         auto src = CreateSourcePoint(builder,srcAddr,6565);
-        auto input = CreateInput(builder,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
+        auto input = CreateInput(builder,0,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
                                  IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
                 ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union();
         const auto ticked = Tick(tick,GetFrameTime());

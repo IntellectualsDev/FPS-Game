@@ -10,21 +10,21 @@
 #include "PacketBuffer.h"
 class Gateway {
 public:
-    Gateway();
+    Gateway(string gatewayIP, int gatewayPort, PacketBuffer& buffer);
     ~Gateway();
     void start();
     void shutdown();
     const ENetAddress &getAddress() const;
     int getPort() const;
     const atomic<bool> &getShutdownFlag() const;
-    const map<string, pair<string, ENetPeer *>> &getClientList() const;
+    const map<string, pair<string, ENetPeer *>> &getServerList() const;
 private:
     void networkLoop();
-    ENetHost* server;
+    ENetHost* client;
     ENetAddress address;
     int port;
 
-    thread networkThead;
+    thread networkThread;
     mutex networkMutex;
     condition_variable networkCV;
     atomic<bool> shutdownFlag;

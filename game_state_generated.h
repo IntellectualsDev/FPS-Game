@@ -761,18 +761,22 @@ inline ::flatbuffers::Offset<Client> CreateClientDirect(
 struct Input FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef InputBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_W = 4,
-    VT_A = 6,
-    VT_S = 8,
-    VT_D = 10,
-    VT_MOUSE_DELTA = 12,
-    VT_SHOOT = 14,
-    VT_SPACE = 16,
-    VT_DT = 18,
-    VT_PREVIOUS_POSITION = 20,
-    VT_SPRINT = 22,
-    VT_CROUCH = 24
+    VT_CLIENT_UID = 4,
+    VT_W = 6,
+    VT_A = 8,
+    VT_S = 10,
+    VT_D = 12,
+    VT_MOUSE_DELTA = 14,
+    VT_SHOOT = 16,
+    VT_SPACE = 18,
+    VT_DT = 20,
+    VT_PREVIOUS_POSITION = 22,
+    VT_SPRINT = 24,
+    VT_CROUCH = 26
   };
+  uint32_t client_uid() const {
+    return GetField<uint32_t>(VT_CLIENT_UID, 0);
+  }
   bool w() const {
     return GetField<uint8_t>(VT_W, 0) != 0;
   }
@@ -808,6 +812,7 @@ struct Input FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_CLIENT_UID, 4) &&
            VerifyField<uint8_t>(verifier, VT_W, 1) &&
            VerifyField<uint8_t>(verifier, VT_A, 1) &&
            VerifyField<uint8_t>(verifier, VT_S, 1) &&
@@ -827,6 +832,9 @@ struct InputBuilder {
   typedef Input Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_client_uid(uint32_t client_uid) {
+    fbb_.AddElement<uint32_t>(Input::VT_CLIENT_UID, client_uid, 0);
+  }
   void add_w(bool w) {
     fbb_.AddElement<uint8_t>(Input::VT_W, static_cast<uint8_t>(w), 0);
   }
@@ -873,6 +881,7 @@ struct InputBuilder {
 
 inline ::flatbuffers::Offset<Input> CreateInput(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t client_uid = 0,
     bool w = false,
     bool a = false,
     bool s = false,
@@ -888,6 +897,7 @@ inline ::flatbuffers::Offset<Input> CreateInput(
   builder_.add_previous_position(previous_position);
   builder_.add_dt(dt);
   builder_.add_mouse_delta(mouse_delta);
+  builder_.add_client_uid(client_uid);
   builder_.add_crouch(crouch);
   builder_.add_sprint(sprint);
   builder_.add_space(space);

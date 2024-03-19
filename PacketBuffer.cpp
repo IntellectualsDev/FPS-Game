@@ -31,22 +31,65 @@ void PacketBuffer::addPacket(unique_ptr<ENetPacket> packet) {
     buffer_Condition.notify_all();
 
 }
-unique_ptr<ENetPacket> PacketBuffer::removePacketInstant() {
+void PacketBuffer::addBufferHandler(unique_ptr<BufferHandler> packet) {
+    {
+        unique_lock<mutex> lock(bufferMutex);
+
+        if(shutdownFlag){
+            {
+                std::lock_guard<std::mutex> guard(consoleMutex);
+                cout << "Input Buffer is in shutdown. Packets cannot be queued for service in shutdown.\n" << endl;
+
+
+            }
+            // TODO: deal with packets already in the system. Don't want data loss
+            return;
+        }
+        packetQueueIn.push(std::move(packet));
+        numberOfPackets++;
+        {
+            std::lock_guard<std::mutex> guard(consoleMutex);
+            printf("Packet received in Input Buffer.\n\ttick = %zu\n", packetQueueIn.back()->getPacketView()->tick()->tick_number());
+
+        }
+    }
+
+    buffer_Condition.notify_all();
+
+}
+vector<unique_ptr<BufferHandler>> PacketBuffer::removePacketInstant() {
     unique_lock<mutex> lock(bufferMutex); // lock the buffer
 
     // enter wait state and unlock lock until the packetQueue is notified, then check if it satisfies the lambda function if not
     // go back to waiting. This approach prevents random wakeups as even if it is woken up randomly it will not proceed unless it
     // can
-
-    if(packetQueue.empty() || shutdownFlag.load()){
+    buffer_Condition.wait(lock, [this] {
+        return (!packetQueue.empty() || shutdownFlag.load());
+    });
+    if(packetQueueIn.empty() && shutdownFlag.load()){
 
         cout << "empty or shutdown in packet buffer instant method" << endl;
-        return nullptr;
+        vector<std::unique_ptr<BufferHandler>> temp2;
+        return temp2;
+
     }
-    auto packet = std::move(packetQueue.front()); // pull out the packet
-    packetQueue.pop();
-    numberOfPackets--;
-    return packet;
+    vector<unique_ptr<BufferHandler>> packetList;
+    packetList.reserve(packetQueueIn.size());
+    while(!packetQueueIn.empty()){
+        auto packet = std::move(packetQueueIn.front()); // pull out the packet
+        {
+            std::lock_guard<std::mutex> guard(consoleMutex);
+            cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
+            cout <<"Tick no. in transmitter: " <<packet->getPacketView()->tick()->tick_number() << endl;
+        }
+        packetQueueIn.pop();
+        packetList.push_back(std::move(packet));
+        numberOfPackets--;
+
+    }
+//    cout << numberOfPackets << endl;
+
+    return std::move(packetList);
 }
 /*
  * In removePacket() a lock based on the bufferMutex mutex is acquired, once acquired if the queue is empty the thread enters a wait

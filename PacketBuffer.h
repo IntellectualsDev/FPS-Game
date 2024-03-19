@@ -14,7 +14,7 @@
 #include <mutex>
 #include <queue>
 #include <memory>
-
+#include "BufferHandler.h"
 // Needed for manual building
 #include <functional>
 #include <atomic>
@@ -57,10 +57,10 @@ public:
 
     // add to the buffer, (acquire the lock and add to end)
     void addPacket(unique_ptr<ENetPacket> packet);
-
+    void addBufferHandler(unique_ptr<BufferHandler> packet);
     // remove from the buffer, wait until not empty or shutdown & acquire the lock and pop from front
     vector<unique_ptr<ENetPacket>> removePacketWait();
-    unique_ptr<ENetPacket> removePacketInstant();
+    vector<unique_ptr<BufferHandler>> removePacketInstant();
     // wake all waiting threads
     void notifyAll();
 
@@ -76,6 +76,7 @@ private:
     mutex bufferMutex;
     condition_variable buffer_Condition;
     queue<unique_ptr<ENetPacket>> packetQueue;
+    queue<unique_ptr<BufferHandler>> packetQueueIn;
 };
 
 #endif
