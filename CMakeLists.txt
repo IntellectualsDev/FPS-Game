@@ -34,7 +34,7 @@ message(STATUS "ENet library found: ${ENET_LIBRARY}")
 
 
 
-add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp CircularBuffer.cpp Executor.cpp game_state_generated.h game_state.fbs)
+add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp game_state_generated.h game_state.fbs Transmitter.cpp Transmitter.h PacketBuffer.cpp PacketBuffer.h)
 
 target_link_libraries(${PROJECT_NAME} raylib)
 target_link_libraries(${PROJECT_NAME} ${ENET_LIBRARY} ws2_32 winmm)
