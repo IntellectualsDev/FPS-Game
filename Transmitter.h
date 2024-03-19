@@ -12,7 +12,7 @@
 #include "DevEnv/flatbuffers/include/flatbuffers/flatbuffer_builder.h"
 class Transmitter {
 public:
-    Transmitter(ENetHost* server, ENetAddress address, int port, PacketBuffer& transmitBuffer);
+    Transmitter(ENetHost* client, ENetAddress address, int port, PacketBuffer& transmitBuffer);
     void start();
     void shutdown();
     PacketBuffer& getPacketBuffer();
@@ -20,7 +20,7 @@ public:
 private:
     flatbuffers::FlatBufferBuilder builder;
     void transmitLoop();
-    void transmitPacket(unique_ptr<OD_Packet> packet);
+    void transmitPacket(unique_ptr<ENetPacket> packet);
     ENetHost* client;
     ENetAddress address;
     int port;

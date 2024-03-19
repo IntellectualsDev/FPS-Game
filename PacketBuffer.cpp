@@ -5,7 +5,7 @@ using namespace std;
 PacketBuffer::PacketBuffer():
         shutdownFlag(false), numberOfPackets(0) {}
 
-void PacketBuffer::addPacket(unique_ptr<OD_Packet> packet) {
+void PacketBuffer::addPacket(unique_ptr<ENetPacket> packet) {
     {
         unique_lock<mutex> lock(bufferMutex);
 
@@ -16,12 +16,13 @@ void PacketBuffer::addPacket(unique_ptr<OD_Packet> packet) {
         }
         packetQueue.push(std::move(packet));
         numberOfPackets++;
-        printf("Packet received in Receive Buffer.\n\tpacketType = %zu\n\tPayload = %s\n", packetQueue.front()->packet_type(), packetQueue.front()->payload());
+        printf("Packet received in Receive Buffer.\n\tpacketType = %zu\n\tPayload = %s\n", GetOD_Packet(packetQueue.front()->data)->packet_type(),
+               GetOD_Packet(packetQueue.front()->data)->payload());
     }
 
     buffer_Condition.notify_one();
 }
-unique_ptr<OD_Packet> PacketBuffer::removePacketInstant() {
+unique_ptr<ENetPacket> PacketBuffer::removePacketInstant() {
     unique_lock<mutex> lock(bufferMutex); // lock the buffer
 
     // enter wait state and unlock lock until the packetQueue is notified, then check if it satisfies the lambda function if not
@@ -43,7 +44,7 @@ unique_ptr<OD_Packet> PacketBuffer::removePacketInstant() {
  * notified to wake up by cv.notify_one() or cv.notify_all() it will wake up and try to reacquire the lock (handled by the wait funciton)
  * , and once it reacquires the lock it will begin the service the request.
  */
-unique_ptr<OD_Packet> PacketBuffer::removePacketWait() {
+vector<unique_ptr<ENetPacket>>* PacketBuffer::removePacketWait() {
     unique_lock<mutex> lock(bufferMutex); // lock the buffer
 
     // enter wait state and unlock lock until the packetQueue is notified, then check if it satisfies the lambda function if not
@@ -57,11 +58,15 @@ unique_ptr<OD_Packet> PacketBuffer::removePacketWait() {
         cout << "Packet Buffer is in shutDown. " << shutdownFlag.load() << endl << "All existing packets have been serviced." << endl;
         return nullptr; //
     }
+    vector<unique_ptr<ENetPacket>>* packetList;
+    for(int i = 0; i < packetQueue.size(); i++){
+        auto packet = std::move(packetQueue.front()); // pull out the packet
+        packetQueue.pop();
+        packetList->push_back(std::move(packet));
+        numberOfPackets--;
+    }
 
-    auto packet = std::move(packetQueue.front()); // pull out the packet
-    packetQueue.pop();
-    numberOfPackets--;
-    return packet;
+    return packetList;
 }
 
 void PacketBuffer::notifyAll() {

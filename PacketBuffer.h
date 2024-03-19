@@ -41,7 +41,7 @@ using namespace std;
 
 
 
-using SubscriberCallback = function<void (const OD_Packet*)>;
+using SubscriberCallback = function<void (const ENetPacket*)>;
 
 class PacketBuffer {
 public:
@@ -56,11 +56,11 @@ public:
     PacketBuffer& operator=(const PacketBuffer&) = delete;
 
     // add to the buffer, (acquire the lock and add to end)
-    void addPacket(unique_ptr<OD_Packet> packet);
+    void addPacket(unique_ptr<ENetPacket> packet);
 
     // remove from the buffer, wait until not empty or shutdown & acquire the lock and pop from front
-    unique_ptr<OD_Packet> removePacketWait();
-    unique_ptr<OD_Packet> removePacketInstant();
+    vector<unique_ptr<ENetPacket>>* removePacketWait();
+    unique_ptr<ENetPacket> removePacketInstant();
     // wake all waiting threads
     void notifyAll();
 
@@ -74,7 +74,7 @@ private:
     atomic<bool> shutdownFlag;
     mutex bufferMutex;
     condition_variable buffer_Condition;
-    queue<unique_ptr<OD_Packet>> packetQueue;
+    queue<unique_ptr<ENetPacket>> packetQueue;
 };
 
 #endif

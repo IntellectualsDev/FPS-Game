@@ -8,12 +8,11 @@
 #include <raylib.h>
 #include <raymath.h>
 
-
+#include "PacketBuffer.h"
 #include <iostream>
 #include "Bullet.h"
 #include "vector"
-#include "CircularBuffer.h"
-#include "Executor.h"
+
 
 #endif
 //GAME1_PLAYER_H
@@ -72,7 +71,7 @@ public:
     bool CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector);
     void updateEntities(float dt);
     Vector3 camera_direction(Camera *tcamera);
-    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch);
+    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer);
     Camera3D * getCamera();
     Vector3 getHitBox();
     void setCameraMode(int temp);

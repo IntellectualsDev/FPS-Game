@@ -33,7 +33,7 @@
 //it also has a vector of bullet entities that will be rendered in the main loop
 //once you pull out a packet look into the queue and see where the next position should be and interpolate to that position
     //this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
-void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch) {
+void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer) {
 //Continious collision detection.
 
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
@@ -103,6 +103,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     playerBox.max = (Vector3){position.x + hitbox.x/2,
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
+    updateEntities(dt);
 }
 Vector3 Player::getHitBox() {
     return this->hitbox;

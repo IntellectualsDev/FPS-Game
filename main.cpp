@@ -11,7 +11,7 @@
 #include "Player.h"
 #include "Bullet.h"
 #include <enet/enet.h>
-
+#include "Transmitter.h"
 
 
 //------------------------------------------------------------------------------------
@@ -19,15 +19,23 @@
 //------------------------------------------------------------------------------------
 int main(void)
 {
-
+    if (enet_initialize() != 0) {
+        std::cerr << "Failed to initialize ENet\n";
+        return EXIT_FAILURE;
+    }
+    ENetHost* host = enet_host_create(nullptr,0,2,0,0);
+    if (host == nullptr)
+    {
+        fprintf (stderr,
+                 "An error occurred while trying to create an ENet client host.\n");
+        exit (EXIT_FAILURE);
+    }
+    PacketBuffer outputBuffer;
+    Transmitter transmitter(host,host->address,6565,outputBuffer);
+    transmitter.start();
     //TODO
     //implement join sequence
 
-    if(enet_initialize() != 0){
-        fprintf(stderr, "An error occured");
-        return EXIT_FAILURE;
-    }
-    atexit (enet_deinitialize);
     //TODO
     //assign stuff based on server
     //also interpolate
@@ -58,7 +66,6 @@ int main(void)
     const int screenHeight = GetMonitorHeight(0);
     Rl_CloseWindow();
     InitWindow(screenWidth-400, screenHeight-400, "Shooter Game");
-
     //set fps
     SetTargetFPS(60);
     //disable cursor
@@ -72,16 +79,39 @@ int main(void)
         //get previous position
         //TODO
         //implement checking incoming packets against past packet buffer and update client position based off that
-
         prevPosition = temp.getPosition();
         //read local inputs and update player positions/spawn bullet entities
+        flatbuffers::FlatBufferBuilder builder(1024);
+        OD_PacketBuilder packetBuilder(builder);
+        packetBuilder.add_reliable(false);
+        packetBuilder.add_dest_point(CreateDestPoint(builder,builder.CreateString("dest"),1234));
+        packetBuilder.add_source_point(CreateSourcePoint(builder,builder.CreateString("src"),6565));
+        packetBuilder.add_packet_type(PacketType_Input);
+        packetBuilder.add_lobby_number(0);
+        packetBuilder.add_payload_type(PacketPayload_Input);
+        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
+        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
+        packetBuilder.add_payload(CreateInput(builder,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
+                                              IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
+                                              ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union());
+        auto packet = packetBuilder.Finish();
+        builder.Finish(packet);
+        uint8_t* buffer = builder.GetBufferPointer();
+        size_t bufferSize = builder.GetSize();
+        enet_uint32 flags = 0;
+        if(GetOD_Packet(buffer)->reliable()){
+            flags = ENET_PACKET_FLAG_RELIABLE;
+        }
+        // Create an ENetPacket from the serialized data
+        ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, 0);
+        std::unique_ptr<ENetPacket>finalPacket(packetToSend);
+        outputBuffer.addPacket(std::move(finalPacket));
+
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
                           IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
-                          IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL));
+                          IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
+
         //update bullet entities position based on a multiple of the frame time(delta T)
-        temp.updateEntities(GetFrameTime());
-
-
         //check for all Collisions
         for(int j = 0;j <terrainVector.size();j++){
             for(int i = 0; i <temp.getEntities()->size();i++){
@@ -92,18 +122,7 @@ int main(void)
                     cout << ref[i].getAlive() << endl;
                 }
             }
-            //check for player collisions with terrain
-
-            //if bottom of player is through the top of a terrain
-                //set grounded to true and update player position
-            //if top of player is through bottom of terrain
-            //if left of player is through right of terrain
-            //if right of player is through left of terrain
-            //if front of player is through back of terrain
-            //if back of player is through front of terrain
-
-            }
-
+        }
 
         //begin rendering
         BeginDrawing();
