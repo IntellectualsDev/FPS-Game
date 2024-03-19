@@ -12,27 +12,47 @@
 #include "Bullet.h"
 #include <enet/enet.h>
 #include "Transmitter.h"
-
+#include "DummyClient.h"
 
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
+mutex consoleMutex;
 int main(void)
 {
+//    if (enet_initialize () != 0)
+//    {
+//        fprintf (stderr, "An error occurred while initializing ENet.\n");
+//        return EXIT_FAILURE;
+//    }
+//    atexit (enet_deinitialize);
+//
+//    DummyClient client = DummyClient();
+//
+//     this_thread::sleep_for(chrono::seconds(3));
+//
+//    while(true){
+//        client.connect("192.168.1.12", 5450);
+//        client.sendPacket("You Smell");
+//        client.sendPacket("Hehe");
+//    }
+//    return 0;
+
+
+
+
+
+
     if (enet_initialize() != 0) {
         std::cerr << "Failed to initialize ENet\n";
         return EXIT_FAILURE;
     }
-    ENetHost* host = enet_host_create(nullptr,0,2,0,0);
-    if (host == nullptr)
-    {
-        fprintf (stderr,
-                 "An error occurred while trying to create an ENet client host.\n");
-        exit (EXIT_FAILURE);
-    }
-    PacketBuffer outputBuffer;
-    Transmitter transmitter(host,host->address,6565,outputBuffer);
-    transmitter.start();
+    atexit (enet_deinitialize);
+
+
+    PacketBuffer outputBuffer(consoleMutex);
+    Transmitter transmitter("192.168.56.1",6565,outputBuffer,consoleMutex);
+
     //TODO
     //implement join sequence
 
@@ -75,25 +95,40 @@ int main(void)
     //vector of all bullets that have been spawned by local player
     vector<Bullet>& ref = *temp.getEntities();
     //Main Loop
+    transmitter.start();
+    int tick = 1;
     while (!WindowShouldClose()){
         //get previous position
+        if(tick%60 == 0){
+            tick = 1;
+        }else{
+            tick +=1;
+        }
         //TODO
         //implement checking incoming packets against past packet buffer and update client position based off that
         prevPosition = temp.getPosition();
         //read local inputs and update player positions/spawn bullet entities
         flatbuffers::FlatBufferBuilder builder(1024);
+        auto destAddr = builder.CreateString("192.168.1.12");
+        auto srcAddr = builder.CreateString("192.168.56.1");
+        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
+        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
+        auto dest = CreateDestPoint(builder,destAddr,5450);
+        auto src = CreateSourcePoint(builder,srcAddr,6565);
+        auto input = CreateInput(builder,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
+                                 IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
+                ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union();
+        const auto ticked = Tick(tick,GetFrameTime());
         OD_PacketBuilder packetBuilder(builder);
+
         packetBuilder.add_reliable(false);
-        packetBuilder.add_dest_point(CreateDestPoint(builder,builder.CreateString("dest"),1234));
-        packetBuilder.add_source_point(CreateSourcePoint(builder,builder.CreateString("src"),6565));
+        packetBuilder.add_dest_point(dest);
+        packetBuilder.add_source_point(src);
         packetBuilder.add_packet_type(PacketType_Input);
         packetBuilder.add_lobby_number(0);
         packetBuilder.add_payload_type(PacketPayload_Input);
-        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
-        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
-        packetBuilder.add_payload(CreateInput(builder,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
-                                              IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
-                                              ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union());
+        packetBuilder.add_tick(&ticked);
+        packetBuilder.add_payload(input);
         auto packet = packetBuilder.Finish();
         builder.Finish(packet);
         uint8_t* buffer = builder.GetBufferPointer();
@@ -103,8 +138,12 @@ int main(void)
             flags = ENET_PACKET_FLAG_RELIABLE;
         }
         // Create an ENetPacket from the serialized data
-        ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, 0);
+        ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
         std::unique_ptr<ENetPacket>finalPacket(packetToSend);
+        {
+            std::lock_guard<std::mutex> guard(consoleMutex);
+            cout << "Tick in main:" << tick << endl;
+        }
         outputBuffer.addPacket(std::move(finalPacket));
 
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),

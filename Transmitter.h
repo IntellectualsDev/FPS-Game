@@ -12,13 +12,15 @@
 #include "DevEnv/flatbuffers/include/flatbuffers/flatbuffer_builder.h"
 class Transmitter {
 public:
-    Transmitter(ENetHost* client, ENetAddress address, int port, PacketBuffer& transmitBuffer);
+    Transmitter(const string& temp_address, int port, PacketBuffer& transmitBuffer,mutex& consoleMutex);
     void start();
     void shutdown();
     PacketBuffer& getPacketBuffer();
 
 private:
+    ENetPeer* server;
     flatbuffers::FlatBufferBuilder builder;
+    bool connect(const string& serverIP,int port);
     void transmitLoop();
     void transmitPacket(unique_ptr<ENetPacket> packet);
     ENetHost* client;
@@ -27,6 +29,7 @@ private:
     std::thread transmitThread;
     std::atomic<bool> shutdownFlag;
     PacketBuffer& transmitBuffer;
+    mutex &consoleMutex;
 };
 
 

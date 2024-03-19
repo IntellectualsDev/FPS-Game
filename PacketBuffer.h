@@ -45,7 +45,7 @@ using SubscriberCallback = function<void (const ENetPacket*)>;
 
 class PacketBuffer {
 public:
-    PacketBuffer();
+    PacketBuffer(mutex& consoleMutex);
 //        ~PacketBuffer();
 
     // delete the copy constructor and copy assignment operator
@@ -59,7 +59,7 @@ public:
     void addPacket(unique_ptr<ENetPacket> packet);
 
     // remove from the buffer, wait until not empty or shutdown & acquire the lock and pop from front
-    vector<unique_ptr<ENetPacket>>* removePacketWait();
+    vector<unique_ptr<ENetPacket>> removePacketWait();
     unique_ptr<ENetPacket> removePacketInstant();
     // wake all waiting threads
     void notifyAll();
@@ -70,6 +70,7 @@ public:
     void shutdown();
 
 private:
+    mutex& consoleMutex;
     int numberOfPackets;
     atomic<bool> shutdownFlag;
     mutex bufferMutex;
