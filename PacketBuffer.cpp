@@ -21,11 +21,11 @@ void PacketBuffer::addPacket(unique_ptr<ENetPacket> packet) {
         }
         packetQueue.push(std::move(packet));
         numberOfPackets++;
-        {
-            std::lock_guard<std::mutex> guard(consoleMutex);
-            printf("Packet received in Output Buffer.\n\ttick = %zu\n", GetOD_Packet(packetQueue.back()->data)->tick()->tick_number());
-
-        }
+//        {
+//            std::lock_guard<std::mutex> guard(consoleMutex);
+//            printf("Packet received in Output Buffer.\n\ttick = %zu\n", GetOD_Packet(packetQueue.back()->data)->tick()->tick_number());
+//
+//        }
     }
 
     buffer_Condition.notify_all();
@@ -47,11 +47,11 @@ void PacketBuffer::addBufferHandler(unique_ptr<BufferHandler> packet) {
         }
         packetQueueIn.push(std::move(packet));
         numberOfPackets++;
-        {
-            std::lock_guard<std::mutex> guard(consoleMutex);
-            printf("Packet received in Input Buffer.\n\ttick = %zu\n", packetQueueIn.back()->getPacketView()->tick()->tick_number());
-
-        }
+//        {
+//            std::lock_guard<std::mutex> guard(consoleMutex);
+//            printf("Packet received in Input Buffer.\n\ttick = %zu\n", packetQueueIn.back()->getPacketView()->tick()->tick_number());
+//
+//        }
     }
 
     buffer_Condition.notify_all();
@@ -77,11 +77,11 @@ vector<unique_ptr<BufferHandler>> PacketBuffer::removePacketInstant() {
     packetList.reserve(packetQueueIn.size());
     while(!packetQueueIn.empty()){
         auto packet = std::move(packetQueueIn.front()); // pull out the packet
-        {
-            std::lock_guard<std::mutex> guard(consoleMutex);
-            cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
-            cout <<"Tick no. in transmitter: " <<packet->getPacketView()->tick()->tick_number() << endl;
-        }
+//        {
+//            std::lock_guard<std::mutex> guard(consoleMutex);
+//            cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
+//            cout <<"Tick no. in transmitter: " <<packet->getPacketView()->tick()->tick_number() << endl;
+//        }
         packetQueueIn.pop();
         packetList.push_back(std::move(packet));
         numberOfPackets--;
@@ -99,23 +99,23 @@ vector<unique_ptr<BufferHandler>> PacketBuffer::removePacketInstant() {
  */
 vector<unique_ptr<ENetPacket>> PacketBuffer::removePacketWait() {
     unique_lock<mutex> lock(bufferMutex); // lock the buffer
-    {
-        std::lock_guard<std::mutex> guard(consoleMutex);
-        cout << "transmitter is attempting to pull from buffer" << endl;
-
-
-    }
+//    {
+//        std::lock_guard<std::mutex> guard(consoleMutex);
+//        cout << "transmitter is attempting to pull from buffer" << endl;
+//
+//
+//    }
     // enter wait state and unlock lock until the packetQueue is notified, then check if it satisfies the lambda function if not
     // go back to waiting. This approach prevents random wakeups as even if it is woken up randomly it will not proceed unless it
     // can
     buffer_Condition.wait(lock, [this] {
         return (!packetQueue.empty() || shutdownFlag.load());
     });
-    {
-        std::lock_guard<std::mutex> guard(consoleMutex);
-        cout << "transmitter got the green light" << endl;
-
-    }
+//    {
+//        std::lock_guard<std::mutex> guard(consoleMutex);
+//        cout << "transmitter got the green light" << endl;
+//
+//    }
     if(packetQueue.empty() || shutdownFlag.load()){
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
@@ -131,11 +131,11 @@ vector<unique_ptr<ENetPacket>> PacketBuffer::removePacketWait() {
 
     while(!packetQueue.empty()){
         auto packet = std::move(packetQueue.front()); // pull out the packet
-        {
-            std::lock_guard<std::mutex> guard(consoleMutex);
-            cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
-            cout <<"Tick no. in transmitter: " <<GetOD_Packet(packet->data)->tick()->tick_number() << endl;
-        }
+//        {
+//            std::lock_guard<std::mutex> guard(consoleMutex);
+//            cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
+//            cout <<"Tick no. in transmitter: " <<GetOD_Packet(packet->data)->tick()->tick_number() << endl;
+//        }
         packetQueue.pop();
         packetList.push_back(std::move(packet));
         numberOfPackets--;

@@ -65,7 +65,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                             0.0f                                                // Rotation: roll
                     },
                     GetMouseWheelMove()*dt *2.0f);
-    position = camera.position;
 
 
 
@@ -80,18 +79,23 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
-
     for(int i = 0;i < terrainList.size();i++){
-        if(i <3){
+        if(i <= 3){
             //TODO fix this
-            if(CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space){
+            if(i!=4 && CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space && !CheckCollisionBoxes(playerBox,terrainList[i])){
+                position = camera.position;
                 position.y = 2+topBoxVector[i].max.y;//bad code
                 camera.position.y = position.y;
                 topCollision = true;
-            }else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+            }
+            else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+                position = camera.position;
                 position = Vector3Add(position,separationVector);
                 camera.position = position;
                 camera.target = Vector3Add(camera.target,separationVector);
+
+            }else{
+                position = camera.position;
             }
         }
 
@@ -183,15 +187,14 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
         } else if (minSeparation == abs(rightSeparation)) {
             separationVector = { -rightSeparation, 0.0f, 0.0f };
         } else if (minSeparation == abs(aboveSeparation)) {
-            separationVector = { 0.0f, aboveSeparation, 0.0f };
+            separationVector = { 0.0f, -aboveSeparation, 0.0f };
         } else if (minSeparation == abs(belowSeparation)) {
-            separationVector = { 0.0f, -belowSeparation, 0.0f };
+            separationVector = { 0.0f, belowSeparation, 0.0f };
         } else if (minSeparation == abs(frontSeparation)) {
             separationVector = { 0.0f, 0.0f, frontSeparation };
         } else {
             separationVector = { 0.0f, 0.0f, -behindSeparation };
         }
-
         return true;
     }
 

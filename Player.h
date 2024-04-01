@@ -98,7 +98,7 @@ private:
     Vector3 separationVector{};
     bool topCollision{};
     float Gravity = -0.08;
-    float Jump = 2.0f;
+    float Jump = 2.5f;
     bool grounded = false;
     BoundingBox playerBox{};
     float coolDown = 0;
