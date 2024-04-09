@@ -75,7 +75,7 @@ public:
     Camera3D * getCamera();
     Vector3 getHitBox();
     void setCameraMode(int temp);
-    void setGrounded(bool temp);
+    void setGrounded(bool temp,float dt);
     bool getGrounded();
     Vector3 getVelocity();
     vector<Bullet>* getEntities();

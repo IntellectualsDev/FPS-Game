@@ -56,3 +56,7 @@ void Bullet::setBulletModel() {
 Model Bullet::getBulletModel() {
     return bulletModel;
 }
+
+float Bullet::getSpeed() {
+    return speed;
+}
