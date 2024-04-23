@@ -87,7 +87,7 @@ int main(void)
     Rl_CloseWindow();
     InitWindow(screenWidth, screenHeight, "Shooter Game");
     //set fps
-    SetTargetFPS(120);
+    SetTargetFPS(60);
     //disable cursor
     DisableCursor();
     //init previous position
@@ -112,30 +112,87 @@ int main(void)
 
         //read local inputs and update player positions/spawn bullet entities
         flatbuffers::FlatBufferBuilder builder(1024);
-        auto destAddr = builder.CreateString("192.168.1.12");
+        auto destAddr = builder.CreateString("192.168.1.13");
         auto srcAddr = builder.CreateString("192.168.56.1");
-        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
-        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
+        const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
         auto dest = CreateDestPoint(builder,destAddr,5450);
         auto src = CreateSourcePoint(builder,srcAddr,6565);
-        auto input = CreateInput(builder,0,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
-                                 IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
-                ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union();
-        const auto ticked = Tick(tick,GetFrameTime());
-        OD_PacketBuilder packetBuilder(builder);
+        const auto ticked = CreateTick(builder,tick,GetFrameTime());
+        const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
+        vector<flatbuffers::Offset<Buffer>> buffers{};
+        auto buffersVector = builder.CreateVector(buffers);
 
+
+//        flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Buffer>>> opponent_buffer_ticks = 0;
+
+//        auto input = CreateInput(builder,0,ticked,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
+//                                 IsKeyDown(KEY_S),IsKeyDown(KEY_D),mouse,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
+//                ,prev,IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL), opponent_buffer_ticks);//implement interpolation buffer
+//        vector<flatbuffers::Offset<Input>> historyBuf;
+//        flatbuffers::Vector<flatbuffers::Offset<Input>> historyBuf;
+
+//        std::vector<Input> clientInputs;
+//        for(auto inputTemp : historyBuf){
+//            auto dref = *inputTemp;
+//            clientInputs.push_back(*inputTemp);
+//        }
+
+//        historyBuf.push_back(input);
+        InputBuilder inputBuilder(builder);
+        inputBuilder.add_tick(ticked);
+        inputBuilder.add_a(IsKeyDown(KEY_A));
+        inputBuilder.add_w(IsKeyDown(KEY_W));
+        inputBuilder.add_s(IsKeyDown(KEY_S));
+        inputBuilder.add_d(IsKeyDown(KEY_D));
+        inputBuilder.add_client_uid(0);
+        inputBuilder.add_crouch(IsKeyDown(KEY_LEFT_CONTROL));
+        inputBuilder.add_mouse_delta(mouse);
+        inputBuilder.add_opponent_buffer_ticks(buffersVector);
+        inputBuilder.add_previous_position(prev);
+        inputBuilder.add_shoot(IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+        inputBuilder.add_space(IsKeyDown(KEY_SPACE));
+        inputBuilder.add_sprint(IsKeyDown(KEY_LEFT_SHIFT));
+        auto input = inputBuilder.Finish();
+
+
+        vector<flatbuffers::Offset<Input>> historyBufOffsetVector;
+        historyBufOffsetVector.push_back(input);
+        auto bufferVector = builder.CreateVector(historyBufOffsetVector);
+//        auto payload = CreatePayload(builder,PayloadTypes_ClientInputs,bufferVector.Union());
+        auto clients = CreateClientInputs(builder,bufferVector);
+        PayloadBuilder payloadBuilder(builder);
+        payloadBuilder.add_payload_CI(clients);
+        payloadBuilder.add_payload_I(NULL);
+        payloadBuilder.add_payload_PD(NULL);
+        payloadBuilder.add_payload_PS(NULL);
+        auto payload = payloadBuilder.Finish();
+        OD_PacketBuilder packetBuilder(builder);
         packetBuilder.add_reliable(false);
         packetBuilder.add_dest_point(dest);
         packetBuilder.add_source_point(src);
         packetBuilder.add_packet_type(PacketType_Input);
+        packetBuilder.add_client_id(0);
         packetBuilder.add_lobby_number(0);
-        packetBuilder.add_payload_type(PacketPayload_Input);
-        packetBuilder.add_tick(&ticked);
-        packetBuilder.add_payload(input);
+        packetBuilder.add_client_tick(ticked);
+        packetBuilder.add_payload(payload);
         auto packet = packetBuilder.Finish();
         builder.Finish(packet);
         uint8_t* buffer = builder.GetBufferPointer();
         size_t bufferSize = builder.GetSize();
+
+//        const OD_Packet* checkPacket = GetOD_Packet(buffer);
+//        if (checkPacket->payload()->payload_type() == PayloadTypes_ClientInputs) {
+//            auto clientInputs = checkPacket->payload()->payload_as_ClientInputs();
+//            bool temp = clientInputs ->client_inputs() != nullptr;
+//            if (clientInputs && clientInputs->client_inputs()->size() > 0) {
+//                auto w = clientInputs->client_inputs()->Get(0)->w();
+//                std::cout << "Buffer contains inputs" << std::endl;
+//            } else {
+//                std::cout << "No inputs in buffer" << std::endl;
+//            }
+//        }
+
+
         enet_uint32 flags = 0;
         if(GetOD_Packet(buffer)->reliable()){
             flags = ENET_PACKET_FLAG_RELIABLE;

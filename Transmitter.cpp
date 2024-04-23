@@ -40,7 +40,7 @@ void Transmitter::transmitLoop(){
 //        std::lock_guard<std::mutex> guard(consoleMutex);
 //        cout << "in transmit loop" << endl;
 //    }
-    connect("192.168.56.1",5450);
+    connect("192.168.1.13",5450);
     while(!shutdownFlag.load()){
 
         auto packetList = transmitBuffer.removePacketWait();
@@ -115,16 +115,35 @@ void Transmitter::transmitPacket(unique_ptr<ENetPacket> packet) {
     ENetEvent event;
     enet_host_service(client, & event, 0);
     ENetPacket* packetToSend = enet_packet_create(packet->data,packet->dataLength,packet->flags);
-    enet_peer_send(server, 0, packetToSend);
+    enet_peer_send(server, 0, packet.get());
     enet_host_flush(client);
-//    {
-//        std::lock_guard<std::mutex> guard(consoleMutex);
-//        printf("Transmitter Sent packet\n\tpayload_type = %s\n", EnumNamePacketType(GetOD_Packet(packet->data)->packet_type()));
-//
-//    }
+    {
+        std::lock_guard<std::mutex> guard(consoleMutex);
+        std::unique_ptr<uint8_t[]> bufferCopy(new uint8_t[packet->dataLength]);
+        memcpy(bufferCopy.get(), packet->data, packet->dataLength);
+        uint8_t *temp= packet->data;
+        auto temp_packet = flatbuffers::GetRoot<OD_Packet>(temp);
+        auto input_size = temp_packet->payload()->payload_CI()->client_inputs()->size();
+        cout << "Input size: "<< input_size << endl;
+//        unique_ptr<BufferHandler> packetBufferHandler = std::make_unique<BufferHandler>(std::move(bufferCopy), packet->dataLength);
+//        if(packetBufferHandler->getPacketView()->payload()->payload_type() == PayloadTypes_ClientInputs){
+//            auto clientInputs = packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs();
+//            if(clientInputs){
+//                auto inputs = clientInputs->client_inputs();
+//                inputs->
+//                inputs->GetAs<Input>(0);
+//                if(inputs && inputs->size() > 0){
+//                    inputs->Get(0);
+//                    auto temp = inputs->data();
+//                    cout << "w:" << temp << endl;
+//                }
+//            }
+//        }
+//        cout << "output packet size: " << packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs()->client_inputs()->size() << endl;
+//        cout << " output packet w: "<<packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs()->client_inputs()->Get(0)->w() << endl;
+
+    }
     std::move(packet);
-
-
 
 
 }
