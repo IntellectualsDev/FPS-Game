@@ -14,11 +14,12 @@ using namespace std;
 //TODO implement TTL on bullets and implent textures and animations on collision
 class Bullet {
 public:
-    Bullet(Vector3 temp_position, Vector3 temp_velocity, Vector3 temp_hitbox,bool temp){
+    Bullet(Vector3 temp_position, Vector3 temp_velocity, Vector3 temp_hitbox,bool temp,float temp_speed){
         position = temp_position;
         velocity = temp_velocity;
         hitbox = temp_hitbox;
         alive = temp;
+        speed = temp_speed;
 //        setBulletModel();
     }
 
@@ -32,8 +33,9 @@ public:
     void setBulletBox(BoundingBox temp);
     void setBulletModel();
     Model getBulletModel();
-
+    float getSpeed();
 private:
+    float speed;
     Model bulletModel;
     bool alive;
     BoundingBox bulletBox{};

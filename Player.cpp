@@ -37,17 +37,20 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 //Continious collision detection.
 
     if(CheckCollisionBoxes(playerBox,terrainList[3])){
-        setGrounded(true);
+        setGrounded(true,dt);
+
     }
     else if(topCollision){
-        grounded = true;
+        setGrounded(true,dt);
         topCollision = false;
     }else{
-        grounded = false;
+        setGrounded(false,dt);
         space = false;
     }
-    if(space && grounded){
-        grounded = false;
+    if(space && grounded && JumpTimer > 5*dt){
+        JumpTimer = 0.0f;
+        setGrounded(false,dt);
+
         velocity = (Vector3){((w)-(s))*dt*4 ,((space)*Jump*10*dt),((d)-(a))*dt*4 };
     }else if (!grounded){
         velocity = (Vector3){((w)-(s))*dt*4 ,velocity.y + Gravity*dt*10,((d)-(a))*dt*4 };
@@ -65,7 +68,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                             0.0f                                                // Rotation: roll
                     },
                     GetMouseWheelMove()*dt *2.0f);
-    position = camera.position;
 
 
 
@@ -73,29 +75,41 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         cout << "SHOOT!" << endl;
+        //TODO
+        //add weapon slots and check current inventory index to spawn correct bullet
         Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
-                    true);
+                    true,10.0f);
         //TODO look into ray casting
 //        temp.getBulletModel().transform =  MatrixRotateXYZ((Vector3){ DEG2RAD*temp.getVelocity().x, DEG2RAD*temp.getVelocity().y, DEG2RAD*temp.getVelocity().z});
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
-
+    position = camera.position;
+    playerBox.min = (Vector3){position.x - hitbox.x/2,
+                              position.y - hitbox.y/2-1.0f,
+                              position.z - hitbox.z/2};
+    playerBox.max = (Vector3){position.x + hitbox.x/2,
+                              position.y + hitbox.y/2-0.5f,
+                              position.z + hitbox.z/2};
     for(int i = 0;i < terrainList.size();i++){
-        if(i <3){
+        if(i <= 3){
             //TODO fix this
-            if(CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space){
+            if(i!=4 && CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space && !CheckCollisionBoxes(playerBox,terrainList[i])){
                 position.y = 2+topBoxVector[i].max.y;//bad code
                 camera.position.y = position.y;
                 topCollision = true;
-            }else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+            }
+            else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+
+
                 position = Vector3Add(position,separationVector);
                 camera.position = position;
                 camera.target = Vector3Add(camera.target,separationVector);
+                if(i != 3){
+
+                }
             }
         }
-
-
     }
     playerBox.min = (Vector3){position.x - hitbox.x/2,
                               position.y - hitbox.y/2-1.0f,
@@ -103,6 +117,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     playerBox.max = (Vector3){position.x + hitbox.x/2,
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
+
     updateEntities(dt);
 }
 Vector3 Player::getHitBox() {
@@ -129,7 +144,7 @@ void Player::updateEntities(float dt) {
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*10));
+                    Vector3Scale(entities[i].getVelocity(), dt*entities[i].getSpeed()));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
@@ -180,18 +195,23 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
 
         if (minSeparation == abs(leftSeparation)) {
             separationVector = { leftSeparation, 0.0f, 0.0f };
+
         } else if (minSeparation == abs(rightSeparation)) {
             separationVector = { -rightSeparation, 0.0f, 0.0f };
+
         } else if (minSeparation == abs(aboveSeparation)) {
-            separationVector = { 0.0f, aboveSeparation, 0.0f };
+            separationVector = { 0.0f, -aboveSeparation, 0.0f };
+
         } else if (minSeparation == abs(belowSeparation)) {
-            separationVector = { 0.0f, -belowSeparation, 0.0f };
+            separationVector = { 0.0f, belowSeparation, 0.0f };
+
         } else if (minSeparation == abs(frontSeparation)) {
             separationVector = { 0.0f, 0.0f, frontSeparation };
+
         } else {
             separationVector = { 0.0f, 0.0f, -behindSeparation };
-        }
 
+        }
         return true;
     }
 
@@ -221,8 +241,19 @@ void Player::setPosition(Vector3 temp) {
 
 }
 
-void Player::setGrounded(bool temp) {
-    grounded = temp;
+void Player::setGrounded(bool temp,float dt) {
+    if(temp){
+        grounded = temp;
+        if(JumpTimer < 6*dt){
+            JumpTimer += dt;
+            cout << JumpTimer << endl;
+        }
+
+    }else{
+
+        grounded = temp;
+    }
+
 }
 
 bool Player::getGrounded() {
@@ -232,6 +263,7 @@ bool Player::getGrounded() {
 Vector3 Player::getVelocity() {
     return velocity;
 }
+
 
 
 

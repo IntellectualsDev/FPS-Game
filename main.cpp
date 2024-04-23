@@ -51,9 +51,15 @@ int main(void)
 
 
     PacketBuffer outputBuffer(consoleMutex);
+<<<<<<< HEAD
     Transmitter transmitter("172.17.8.211",6565,outputBuffer,consoleMutex);
     PacketBuffer inputBuffer(consoleMutex);
     Gateway gateway("172.17.8.211",5808,inputBuffer);
+=======
+    Transmitter transmitter("192.168.56.1",5452,outputBuffer,consoleMutex);
+    PacketBuffer inputBuffer(consoleMutex);
+    Gateway gateway("192.168.56.1",5453,inputBuffer);
+>>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
     //TODO
     //implement join sequence
 
@@ -63,9 +69,8 @@ int main(void)
     FPSClientState player2;
 
     //init local player object
-    Player temp((Vector3){0,2,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
-    //TODO start the output and input threads
-//    Executor<outputState> outputThread(temp.getOutputBuffer(),false);
+    Player temp((Vector3){0,5,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
+
     //init terrain vector
     float wallWidth = 1.0f;
     float wallHeight = 5.0f;
@@ -74,11 +79,11 @@ int main(void)
     BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.0f + wallHeight/2, 16.0f +wallWidth/2}};
-    BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-0.5,-floorLength/2},(Vector3){floorLength/2,0.5,floorLength/2}};
+    BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-1,-floorLength/2},(Vector3){floorLength/2,0,floorLength/2}};
     vector<BoundingBox> terrainVector = {wallBox1,wallBox2,wallBox3,floorBox};
-    BoundingBox topBox1 = (BoundingBox){(Vector3){-16.0f - 0.5, 4.5f, 0.0f -wallLength/2},(Vector3){-16.0f + 0.5, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox topBox2 = (BoundingBox){(Vector3){16.0f - 0.5, 4.5f, 0.0f -wallLength/2},(Vector3){16.0f + 0.5, 2.5f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox topBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 4.5f, 16.0f -0.5},(Vector3){0.0f + wallLength/2, 2.5f + wallHeight/2, 16.0f + 0.5}};
+    BoundingBox topBox1 = (BoundingBox){(Vector3){-16.0f - 0.5+0.05f, 4.99f, 0.0f +0.05f-wallLength/2},(Vector3){-16.0f + 0.5-0.05f, 2.5f + wallHeight/2, 0.0f -0.05f+wallLength/2}};
+    BoundingBox topBox2 = (BoundingBox){(Vector3){16.0f - 0.5+0.05f, 4.99f, 0.0f +0.05f-wallLength/2},(Vector3){16.0f + 0.5-0.05f, 2.5f + wallHeight/2, 0.0f -0.05f+wallLength/2}};
+    BoundingBox topBox3 = (BoundingBox){(Vector3){0.0f+0.05f - wallLength/2, 4.99f, 16.0f -0.5+0.05f},(Vector3){0.0f -0.05f+ wallLength/2, 2.5f + wallHeight/2, 16.0f -0.05f+ 0.5}};
     vector<BoundingBox> topBoxVector = {topBox1,topBox2,topBox3};
     //init window
     //TODO shit code
@@ -86,10 +91,14 @@ int main(void)
     const int screenWidth = GetMonitorWidth(0);
     const int screenHeight = GetMonitorHeight(0);
     Rl_CloseWindow();
+<<<<<<< HEAD
 
     InitWindow(screenWidth-400, screenHeight-400, "Shooter Game");
+=======
+    InitWindow(screenWidth, screenHeight, "Shooter Game");
+>>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
     //set fps
-    SetTargetFPS(60);
+    SetTargetFPS(120);
     //disable cursor
     DisableCursor();
     //init previous position
@@ -97,6 +106,7 @@ int main(void)
     //vector of all bullets that have been spawned by local player
     vector<Bullet>& ref = *temp.getEntities();
     //Main Loop
+    //START THE TRANSMITTER AND GATEWAY
     transmitter.start();
     gateway.start();
     int tick = 1;
@@ -136,6 +146,7 @@ int main(void)
 
 
         prevPosition = temp.getPosition();
+
         //read local inputs and update player positions/spawn bullet entities
         flatbuffers::FlatBufferBuilder builder(1024);
         auto destAddr = builder.CreateString("192.168.1.12");
@@ -205,18 +216,21 @@ int main(void)
         // Create an ENetPacket from the serialized data
         ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
         std::unique_ptr<ENetPacket>finalPacket(packetToSend);
-        {
-            std::lock_guard<std::mutex> guard(consoleMutex);
-            cout << "Tick in main:" << tick << endl;
-        }
+//        {
+//            std::lock_guard<std::mutex> guard(consoleMutex);
+//            cout << "Tick in main:" << tick << endl;
+//        }
         outputBuffer.addPacket(std::move(finalPacket));
-
+        //TODO
+        //client side prediction
         temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
                           IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
                           IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
 
         //update bullet entities position based on a multiple of the frame time(delta T)
         //check for all Collisions
+
+        //TODO put it function or put somewhere else
         for(int j = 0;j <terrainVector.size();j++){
             for(int i = 0; i <temp.getEntities()->size();i++){
                 //check for bullet collisions with all terrain
