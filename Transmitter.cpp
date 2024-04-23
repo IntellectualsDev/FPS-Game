@@ -36,19 +36,34 @@ void Transmitter::start(){
     transmitThread = thread(&Transmitter::transmitLoop,this);
 }
 void Transmitter::transmitLoop(){
+<<<<<<< HEAD
+    {
+        std::lock_guard<std::mutex> guard(consoleMutex);
+        cout << "in transmit loop" << endl;
+    }
+    connect("172.17.8.211",5450);
+=======
 //    {
 //        std::lock_guard<std::mutex> guard(consoleMutex);
 //        cout << "in transmit loop" << endl;
 //    }
     connect("192.168.56.1",5450);
+>>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
     while(!shutdownFlag.load()){
 
         auto packetList = transmitBuffer.removePacketWait();
         if(packetList.empty()) {
+<<<<<<< HEAD
+            {
+                std::lock_guard<std::mutex> guard(consoleMutex);
+                cout << "no packets to pull" << endl;
+            }
+=======
 //            {
 //                std::lock_guard<std::mutex> guard(consoleMutex);
 //                cout << "no packtes to pull" << endl;
 //            }
+>>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
             continue;
         }else{
             int packetListSize = packetList.size();
@@ -123,10 +138,6 @@ void Transmitter::transmitPacket(unique_ptr<ENetPacket> packet) {
 //
 //    }
     std::move(packet);
-
-
-
-
 }
 
 PacketBuffer &Transmitter::getPacketBuffer() {

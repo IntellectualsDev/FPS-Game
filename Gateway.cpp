@@ -71,6 +71,7 @@ void Gateway::networkLoop() {
                     memcpy(bufferCopy.get(), event.packet->data, event.packet->dataLength);
                     unique_ptr<BufferHandler> packetBufferHandler = std::make_unique<BufferHandler>(std::move(bufferCopy), event.packet->dataLength);
                     receiveBuffer.addBufferHandler(std::move(packetBufferHandler));
+                    break;
                 }
                 case ENET_EVENT_TYPE_NONE:
                     cout << "nothing happened" << endl;
