@@ -51,9 +51,9 @@ int main(void)
 
 
     PacketBuffer outputBuffer(consoleMutex);
-    Transmitter transmitter("192.168.56.1",6565,outputBuffer,consoleMutex);
+    Transmitter transmitter("172.17.8.211",6565,outputBuffer,consoleMutex);
     PacketBuffer inputBuffer(consoleMutex);
-    Gateway gateway("192.168.56.1",5808,inputBuffer);
+    Gateway gateway("172.17.8.211",5808,inputBuffer);
     //TODO
     //implement join sequence
 
@@ -86,6 +86,7 @@ int main(void)
     const int screenWidth = GetMonitorWidth(0);
     const int screenHeight = GetMonitorHeight(0);
     Rl_CloseWindow();
+
     InitWindow(screenWidth-400, screenHeight-400, "Shooter Game");
     //set fps
     SetTargetFPS(60);
@@ -108,19 +109,79 @@ int main(void)
         }
         //TODO
         //implement checking incoming packets against past packet buffer and update client position based off that
+        if(inputBuffer.getNumberOfPackets() > 0){
+            auto toProcess = inputBuffer.removePacketInstant();
+            {
+                {
+                    std::lock_guard<std::mutex> guard(consoleMutex);
+                    for(auto& packet : toProcess){
+
+                        cout << "Packet Label: " << EnumNamePacketType(packet->getPacketView()->packet_type()) << endl;
+                        cout << "Source Point: (IP: " << packet->getPacketView()->source_point()->address() << ", Port: " << packet->getPacketView()->source_point()->port() << ") " << endl;
+                        cout << "Destination Point: (IP: " << packet->getPacketView()->dest_point()->address() << ", Port: " << packet->getPacketView()->dest_point()->port() << ") " << endl;
+                        cout << "Lobby Number: " << packet->getPacketView()->lobby_number() << endl;
+                        cout << "Client Tick Number: " << packet->getPacketView()->client_tick()->tick_number() << endl;
+                        cout << "Payload: \n\t: ";
+                        cout << "Payload Type: " << EnumNamePayloadTypes(packet->getPacketView()->payload()->payload_type()) << endl;
+                        cout << "\tdt: " << packet->getPacketView()->client_tick()->dt() << endl;
+                        cout << "\tW: " << packet->getPacketView()->payload()->payload_as_Input()->w() << ", A: " << packet->getPacketView()->payload()->payload_as_Input()->a() << " S: " << packet->getPacketView()->payload()->payload_as_Input()->s() << " D: " << packet->getPacketView()->payload()->payload_as_Input()->d() << endl;
+                        cout << "\tMouseDelta: (" << packet->getPacketView()->payload()->payload_as_Input()->mouse_delta()->x() << ", " << packet->getPacketView()->payload()->payload_as_Input()->mouse_delta()->y() << ")" << endl;
+                        cout << "\tShoot: " << to_string(packet->getPacketView()->payload()->payload_as_Input()->shoot()) << ", Jump: " << to_string(packet->getPacketView()->payload()->payload_as_Input()->space()) << ", Sprint: " << to_string(packet->getPacketView()->payload()->payload_as_Input()->sprint()) << endl;
+                        cout << "\tPrevious State: (" << packet->getPacketView()->payload()->payload_as_Input()->previous_position()->x() << ", " << packet->getPacketView()->payload()->payload_as_Input()->previous_position()->y() << ", " << packet->getPacketView()->payload()->payload_as_Input()->previous_position()->z() << ")\n" << endl;
+                    }
+                    // TODO: Enter a decision tree determining what authoritative decision is required
+                }
+            }
+        }
+
+
         prevPosition = temp.getPosition();
         //read local inputs and update player positions/spawn bullet entities
         flatbuffers::FlatBufferBuilder builder(1024);
         auto destAddr = builder.CreateString("192.168.1.12");
         auto srcAddr = builder.CreateString("192.168.56.1");
-        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
-        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
-        auto dest = CreateDestPoint(builder,destAddr,5450);
+//        const auto waste = OD_Vector2(GetMouseDelta().x,GetMouseDelta().y);
+        const auto waste = CreateOD_Vector2(builder, GetMouseDelta().x, GetMouseDelta().y);
+//        const auto waste2 = OD_Vector3(prevPosition.x,prevPosition.y,prevPosition.z);
+        const auto waste2 = CreateOD_Vector3(builder, prevPosition.x, prevPosition.y, prevPosition.z);
+        auto dest = CreateDestPoint(builder,destAddr,5808);
         auto src = CreateSourcePoint(builder,srcAddr,6565);
-        auto input = CreateInput(builder,0,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
-                                 IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
-                ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union();
-        const auto ticked = Tick(tick,GetFrameTime());
+        auto tickOffset = CreateTick(builder, tick, GetFrameTime());
+//        auto input = CreateInput(builder,0,IsKeyDown(KEY_W),IsKeyDown(KEY_A),
+//                                 IsKeyDown(KEY_S),IsKeyDown(KEY_D),&waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),IsKeyDown(KEY_SPACE)
+//                ,GetFrameTime(),&waste2,IsKeyDown(KEY_LEFT_SHIFT)).Union();
+//        auto input = CreateInput(builder
+//                ,0
+//                ,IsKeyDown(KEY_W)
+//                ,IsKeyDown(KEY_A),
+//                IsKeyDown(KEY_S),
+//                IsKeyDown(KEY_D),
+//                waste,IsMouseButtonDown(MOUSE_BUTTON_LEFT),
+//                IsKeyDown(KEY_SPACE),
+//                GetFrameTime(),
+//                waste2,IsKeyDown(KEY_LEFT_SHIFT)
+//                ).Union();
+        auto mouseDeltaOffset = CreateOD_Vector2(builder, GetMouseDelta().x, GetMouseDelta().y);
+        auto previousPositionOffset = CreateOD_Vector3(builder, prevPosition.x, prevPosition.y, prevPosition.z);
+
+        auto input = CreateInput(builder,
+                                 0,
+                                 tickOffset,
+                                 IsKeyDown(KEY_W),
+                                 IsKeyDown(KEY_A),
+                                 IsKeyDown(KEY_S),
+                                 IsKeyDown(KEY_D),
+                                 mouseDeltaOffset,
+                                 IsMouseButtonDown(MOUSE_BUTTON_LEFT),
+                                 IsKeyDown(KEY_SPACE),
+                                 previousPositionOffset,
+                                 IsKeyDown(KEY_LEFT_SHIFT),
+                                 IsKeyDown(KEY_LEFT_CONTROL)
+                );
+
+        auto payload = CreatePayload(builder, PayloadTypes_Input, input.Union());
+//        const auto ticked = Tick(tick,GetFrameTime());
+        const auto ticked = CreateTick(builder, tick, GetFrameTime(), 60);
         OD_PacketBuilder packetBuilder(builder);
 
         packetBuilder.add_reliable(false);
@@ -128,9 +189,11 @@ int main(void)
         packetBuilder.add_source_point(src);
         packetBuilder.add_packet_type(PacketType_Input);
         packetBuilder.add_lobby_number(0);
-        packetBuilder.add_payload_type(PacketPayload_Input);
-        packetBuilder.add_tick(&ticked);
-        packetBuilder.add_payload(input);
+        packetBuilder.add_payload(payload);
+//        packetBuilder.add_payload_type(PacketPayload_Input);
+//        packetBuilder.add_tick(&ticked);
+        packetBuilder.add_client_tick(ticked);
+//        packetBuilder.add_payload(input);
         auto packet = packetBuilder.Finish();
         builder.Finish(packet);
         uint8_t* buffer = builder.GetBufferPointer();

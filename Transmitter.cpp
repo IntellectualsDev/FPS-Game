@@ -40,14 +40,14 @@ void Transmitter::transmitLoop(){
         std::lock_guard<std::mutex> guard(consoleMutex);
         cout << "in transmit loop" << endl;
     }
-    connect("192.168.1.12",5450);
+    connect("172.17.8.211",5450);
     while(!shutdownFlag.load()){
 
         auto packetList = transmitBuffer.removePacketWait();
         if(packetList.empty()) {
             {
                 std::lock_guard<std::mutex> guard(consoleMutex);
-                cout << "no packtes to pull" << endl;
+                cout << "no packets to pull" << endl;
             }
             continue;
         }else{
@@ -123,10 +123,6 @@ void Transmitter::transmitPacket(unique_ptr<ENetPacket> packet) {
 
     }
     std::move(packet);
-
-
-
-
 }
 
 PacketBuffer &Transmitter::getPacketBuffer() {

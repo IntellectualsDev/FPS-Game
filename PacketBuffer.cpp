@@ -23,7 +23,8 @@ void PacketBuffer::addPacket(unique_ptr<ENetPacket> packet) {
         numberOfPackets++;
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
-            printf("Packet received in Output Buffer.\n\ttick = %zu\n", GetOD_Packet(packetQueue.back()->data)->tick()->tick_number());
+//            printf("Packet received in Output Buffer.\n\ttick = %zu\n", GetOD_Packet(packetQueue.back()->data)->tick()->tick_number());
+            printf("Packet received in Output Buffer.\n\ttick = %zu\n", GetOD_Packet(packetQueue.back()->data)->client_tick()->tick_number());
 
         }
     }
@@ -49,7 +50,7 @@ void PacketBuffer::addBufferHandler(unique_ptr<BufferHandler> packet) {
         numberOfPackets++;
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
-            printf("Packet received in Input Buffer.\n\ttick = %zu\n", packetQueueIn.back()->getPacketView()->tick()->tick_number());
+            printf("Packet received in Input Buffer.\n\ttick = %zu\n", packetQueueIn.back()->getPacketView()->client_tick()->tick_number());
 
         }
     }
@@ -80,7 +81,7 @@ vector<unique_ptr<BufferHandler>> PacketBuffer::removePacketInstant() {
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
             cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
-            cout <<"Tick no. in transmitter: " <<packet->getPacketView()->tick()->tick_number() << endl;
+            cout <<"Tick no. in transmitter: " <<packet->getPacketView()->client_tick()->tick_number() << endl;
         }
         packetQueueIn.pop();
         packetList.push_back(std::move(packet));
@@ -134,7 +135,7 @@ vector<unique_ptr<ENetPacket>> PacketBuffer::removePacketWait() {
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
             cout <<"Number of packets(pulling from buffer in transmitter): " <<numberOfPackets << endl;
-            cout <<"Tick no. in transmitter: " <<GetOD_Packet(packet->data)->tick()->tick_number() << endl;
+            cout <<"Tick no. in transmitter: " <<GetOD_Packet(packet->data)->client_tick()->tick_number() << endl;
         }
         packetQueue.pop();
         packetList.push_back(std::move(packet));
@@ -153,4 +154,8 @@ void PacketBuffer::notifyAll() {
 void PacketBuffer::shutdown() {
     shutdownFlag.store(true);
     buffer_Condition.notify_all(); // wake all threads waiting of this shutdown command
+}
+
+int PacketBuffer::getNumberOfPackets() const {
+    return numberOfPackets;
 }
