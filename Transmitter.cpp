@@ -5,65 +5,50 @@
 #include "Transmitter.h"
 
 Transmitter::Transmitter(const string& temp_address, int port, PacketBuffer &transmitBuffer,mutex& consoleMutex):
-    builder(1024),
-    transmitBuffer(transmitBuffer),
-    shutdownFlag(false),
-    consoleMutex(consoleMutex)
-    {
-        char* clientAddressChar = new char[temp_address.size()+1];
+        builder(1024),
+        transmitBuffer(transmitBuffer),
+        shutdownFlag(false),
+        consoleMutex(consoleMutex)
+{
+    char* clientAddressChar = new char[temp_address.size()+1];
 
-        strcpy(clientAddressChar,temp_address.c_str());
-        cout << clientAddressChar << endl;
-        enet_address_set_host_ip(&address,clientAddressChar);
+    strcpy(clientAddressChar,temp_address.c_str());
+    cout << clientAddressChar << endl;
+    enet_address_set_host_ip(&address,clientAddressChar);
 
-        address.port = port;
-        client = enet_host_create(NULL,2,1,0,0);
-        if (client == nullptr) {
+    address.port = port;
+    client = enet_host_create(NULL,2,1,0,0);
+    if (client == nullptr) {
 //            {
 //                std::lock_guard<std::mutex> guard(consoleMutex);
 //                fprintf(stderr, "An error occurred while trying to create Transmitter CLient ENetHost instance\n");
 //            }
-            exit(EXIT_FAILURE);
-        }
+        exit(EXIT_FAILURE);
+    }
 //        {
 //            std::lock_guard<std::mutex> guard(consoleMutex);
 //        printf("Created Transmitter Client ENetHost  instance @ %x:%u\n", client->address.host, client->address.port);
 //        }
-    }
+}
 
 void Transmitter::start(){
     shutdownFlag.store(false);
     transmitThread = thread(&Transmitter::transmitLoop,this);
 }
 void Transmitter::transmitLoop(){
-<<<<<<< HEAD
-    {
-        std::lock_guard<std::mutex> guard(consoleMutex);
-        cout << "in transmit loop" << endl;
-    }
-    connect("172.17.8.211",5450);
-=======
 //    {
 //        std::lock_guard<std::mutex> guard(consoleMutex);
 //        cout << "in transmit loop" << endl;
 //    }
-    connect("192.168.56.1",5450);
->>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
+    connect("192.168.1.13",5450);
     while(!shutdownFlag.load()){
 
         auto packetList = transmitBuffer.removePacketWait();
         if(packetList.empty()) {
-<<<<<<< HEAD
-            {
-                std::lock_guard<std::mutex> guard(consoleMutex);
-                cout << "no packets to pull" << endl;
-            }
-=======
 //            {
 //                std::lock_guard<std::mutex> guard(consoleMutex);
 //                cout << "no packtes to pull" << endl;
 //            }
->>>>>>> 550e05ef4bdf2e0a8fb9d4f5a36438ce19f2141f
             continue;
         }else{
             int packetListSize = packetList.size();
@@ -130,14 +115,37 @@ void Transmitter::transmitPacket(unique_ptr<ENetPacket> packet) {
     ENetEvent event;
     enet_host_service(client, & event, 0);
     ENetPacket* packetToSend = enet_packet_create(packet->data,packet->dataLength,packet->flags);
-    enet_peer_send(server, 0, packetToSend);
+    enet_peer_send(server, 0, packet.get());
     enet_host_flush(client);
-//    {
-//        std::lock_guard<std::mutex> guard(consoleMutex);
-//        printf("Transmitter Sent packet\n\tpayload_type = %s\n", EnumNamePacketType(GetOD_Packet(packet->data)->packet_type()));
-//
-//    }
+    {
+        std::lock_guard<std::mutex> guard(consoleMutex);
+        std::unique_ptr<uint8_t[]> bufferCopy(new uint8_t[packet->dataLength]);
+        memcpy(bufferCopy.get(), packet->data, packet->dataLength);
+        uint8_t *temp= packet->data;
+        auto temp_packet = flatbuffers::GetRoot<OD_Packet>(temp);
+        auto input_size = temp_packet->payload()->payload_CI()->client_inputs()->size();
+        cout << "Input size: "<< input_size << endl;
+//        unique_ptr<BufferHandler> packetBufferHandler = std::make_unique<BufferHandler>(std::move(bufferCopy), packet->dataLength);
+//        if(packetBufferHandler->getPacketView()->payload()->payload_type() == PayloadTypes_ClientInputs){
+//            auto clientInputs = packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs();
+//            if(clientInputs){
+//                auto inputs = clientInputs->client_inputs();
+//                inputs->
+//                inputs->GetAs<Input>(0);
+//                if(inputs && inputs->size() > 0){
+//                    inputs->Get(0);
+//                    auto temp = inputs->data();
+//                    cout << "w:" << temp << endl;
+//                }
+//            }
+//        }
+//        cout << "output packet size: " << packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs()->client_inputs()->size() << endl;
+//        cout << " output packet w: "<<packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs()->client_inputs()->Get(0)->w() << endl;
+
+    }
     std::move(packet);
+
+
 }
 
 PacketBuffer &Transmitter::getPacketBuffer() {

@@ -63,7 +63,6 @@ public:
     vector<unique_ptr<BufferHandler>> removePacketInstant();
     // wake all waiting threads
     void notifyAll();
-    int getNumberOfPackets() const;
 
     // TODO: get buffer stats, (% full, service rate, how often full, etc)
 

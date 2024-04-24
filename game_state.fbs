@@ -110,8 +110,8 @@ table Input {
     previous_position: OD_Vector3;
     sprint: bool;
     crouch: bool;
-    //implement future support for sliding
-
+    // implement future support for sliding
+    opponent_buffer_ticks:[Buffer];
     // TODO: implement list[{client ID & buffered tick}]
     // send changes to opponents buffer, NOT ALL!!!
     // opponent_buffer_ticks:[Buffer];
@@ -155,7 +155,10 @@ union PayloadTypes{
 }
 
 table Payload{
-    payload: PayloadTypes;
+    payload_CI: ClientInputs;
+    payload_PD: AllPlayerDeltas;
+    payload_PS: AllPlayerSnapshots;
+    payload_I: Input;
 }
 
 table OD_Packet {

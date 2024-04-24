@@ -1525,69 +1525,52 @@ inline ::flatbuffers::Offset<AllPlayerSnapshots> CreateAllPlayerSnapshotsDirect(
 struct Payload FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef PayloadBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_PAYLOAD_TYPE = 4,
-    VT_PAYLOAD = 6
+    VT_PAYLOAD_CI = 4,
+    VT_PAYLOAD_PD = 6,
+    VT_PAYLOAD_PS = 8,
+    VT_PAYLOAD_I = 10
   };
-  PayloadTypes payload_type() const {
-    return static_cast<PayloadTypes>(GetField<uint8_t>(VT_PAYLOAD_TYPE, 0));
+  const ClientInputs *payload_CI() const {
+    return GetPointer<const ClientInputs *>(VT_PAYLOAD_CI);
   }
-  const void *payload() const {
-    return GetPointer<const void *>(VT_PAYLOAD);
+  const AllPlayerDeltas *payload_PD() const {
+    return GetPointer<const AllPlayerDeltas *>(VT_PAYLOAD_PD);
   }
-  template<typename T> const T *payload_as() const;
-  const Input *payload_as_Input() const {
-    return payload_type() == PayloadTypes_Input ? static_cast<const Input *>(payload()) : nullptr;
+  const AllPlayerSnapshots *payload_PS() const {
+    return GetPointer<const AllPlayerSnapshots *>(VT_PAYLOAD_PS);
   }
-  const AllPlayerDeltas *payload_as_AllPlayerDeltas() const {
-    return payload_type() == PayloadTypes_AllPlayerDeltas ? static_cast<const AllPlayerDeltas *>(payload()) : nullptr;
-  }
-  const AllPlayerSnapshots *payload_as_AllPlayerSnapshots() const {
-    return payload_type() == PayloadTypes_AllPlayerSnapshots ? static_cast<const AllPlayerSnapshots *>(payload()) : nullptr;
-  }
-  const ClientStates *payload_as_ClientStates() const {
-    return payload_type() == PayloadTypes_ClientStates ? static_cast<const ClientStates *>(payload()) : nullptr;
-  }
-  const ClientInputs *payload_as_ClientInputs() const {
-    return payload_type() == PayloadTypes_ClientInputs ? static_cast<const ClientInputs *>(payload()) : nullptr;
+  const Input *payload_I() const {
+    return GetPointer<const Input *>(VT_PAYLOAD_I);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint8_t>(verifier, VT_PAYLOAD_TYPE, 1) &&
-           VerifyOffset(verifier, VT_PAYLOAD) &&
-           VerifyPayloadTypes(verifier, payload(), payload_type()) &&
+           VerifyOffset(verifier, VT_PAYLOAD_CI) &&
+           verifier.VerifyTable(payload_CI()) &&
+           VerifyOffset(verifier, VT_PAYLOAD_PD) &&
+           verifier.VerifyTable(payload_PD()) &&
+           VerifyOffset(verifier, VT_PAYLOAD_PS) &&
+           verifier.VerifyTable(payload_PS()) &&
+           VerifyOffset(verifier, VT_PAYLOAD_I) &&
+           verifier.VerifyTable(payload_I()) &&
            verifier.EndTable();
   }
 };
-
-template<> inline const Input *Payload::payload_as<Input>() const {
-  return payload_as_Input();
-}
-
-template<> inline const AllPlayerDeltas *Payload::payload_as<AllPlayerDeltas>() const {
-  return payload_as_AllPlayerDeltas();
-}
-
-template<> inline const AllPlayerSnapshots *Payload::payload_as<AllPlayerSnapshots>() const {
-  return payload_as_AllPlayerSnapshots();
-}
-
-template<> inline const ClientStates *Payload::payload_as<ClientStates>() const {
-  return payload_as_ClientStates();
-}
-
-template<> inline const ClientInputs *Payload::payload_as<ClientInputs>() const {
-  return payload_as_ClientInputs();
-}
 
 struct PayloadBuilder {
   typedef Payload Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_payload_type(PayloadTypes payload_type) {
-    fbb_.AddElement<uint8_t>(Payload::VT_PAYLOAD_TYPE, static_cast<uint8_t>(payload_type), 0);
+  void add_payload_CI(::flatbuffers::Offset<ClientInputs> payload_CI) {
+    fbb_.AddOffset(Payload::VT_PAYLOAD_CI, payload_CI);
   }
-  void add_payload(::flatbuffers::Offset<void> payload) {
-    fbb_.AddOffset(Payload::VT_PAYLOAD, payload);
+  void add_payload_PD(::flatbuffers::Offset<AllPlayerDeltas> payload_PD) {
+    fbb_.AddOffset(Payload::VT_PAYLOAD_PD, payload_PD);
+  }
+  void add_payload_PS(::flatbuffers::Offset<AllPlayerSnapshots> payload_PS) {
+    fbb_.AddOffset(Payload::VT_PAYLOAD_PS, payload_PS);
+  }
+  void add_payload_I(::flatbuffers::Offset<Input> payload_I) {
+    fbb_.AddOffset(Payload::VT_PAYLOAD_I, payload_I);
   }
   explicit PayloadBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -1602,11 +1585,15 @@ struct PayloadBuilder {
 
 inline ::flatbuffers::Offset<Payload> CreatePayload(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    PayloadTypes payload_type = PayloadTypes_NONE,
-    ::flatbuffers::Offset<void> payload = 0) {
+    ::flatbuffers::Offset<ClientInputs> payload_CI = 0,
+    ::flatbuffers::Offset<AllPlayerDeltas> payload_PD = 0,
+    ::flatbuffers::Offset<AllPlayerSnapshots> payload_PS = 0,
+    ::flatbuffers::Offset<Input> payload_I = 0) {
   PayloadBuilder builder_(_fbb);
-  builder_.add_payload(payload);
-  builder_.add_payload_type(payload_type);
+  builder_.add_payload_I(payload_I);
+  builder_.add_payload_PS(payload_PS);
+  builder_.add_payload_PD(payload_PD);
+  builder_.add_payload_CI(payload_CI);
   return builder_.Finish();
 }
 
