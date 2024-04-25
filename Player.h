@@ -38,12 +38,6 @@ struct FPSClientState {
     bool alive = true;
     int cameraMode = CAMERA_FIRST_PERSON;
 };
-struct outputState{
-
-};
-struct inputState{
-
-};
 class Player {
 
 public:
