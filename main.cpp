@@ -243,13 +243,13 @@ int main(void)
             DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, 5.0f, 1.0f, GOLD);      // Draw a yellow wall
 
             for(int i = 0; i < localPlayerBullets.size(); i++){
-                Bullet temp_entity = localPlayerBullets[i];
 
-                DrawCube(temp_entity.getPosition(),temp_entity.getHitbox().x
-                        ,temp_entity.getHitbox().y,
-                         temp_entity.getHitbox().z,
+
+                DrawCube(localPlayerBullets[i].getPosition(),localPlayerBullets[i].getHitbox().x
+                        ,localPlayerBullets[i].getHitbox().y,
+                         localPlayerBullets[i].getHitbox().z,
                          RED);
-                DrawBoundingBox(temp_entity.getBulletBox(),BLACK);
+                DrawBoundingBox(localPlayerBullets[i].getBulletBox(),BLACK);
             }
 //            //            DrawBillboard(*temp.getCamera(),hands, Vector3Scale(Vector3Add(temp.getPosition(),temp.getCamera()->target),2.0f),10.0f,WHITE);
 //            handsPosition = Vector3Subtract(Vector3Add(temp.getCamera()->position, Vector3Scale(temp.getCamera()->target,2.0f*0.5f)),
@@ -260,11 +260,11 @@ int main(void)
 //            DrawBillboard(*temp.getCamera(),hands,temp.getCamera()->target,2.0f,WHITE);
 ////            DrawTextureInFrontOfCamera(*temp.getCamera(),hands, temp.getCamera()->target, 10.0f); // Adjust '0.5f' and '1.0f' as needed
 //            EndBlendMode();
-            handsPosition.x = abs(temp.getCamera()->position.x);
-            handsPosition.y = abs(temp.getCamera()->position.y);
-            handsPosition.z = abs(temp.getCamera()->position.z);
+
 
             EndMode3D();
+            //TODO : ammo count current weapon equipped hp
+            //TODO : swapping gun animations knife animations shooting animations
             BeginBlendMode(BLEND_ALPHA);
             DrawTexturePro(hands,{0.0f,0.0f,(float)hands.width,(float)hands.height},
                            {0,(float)screenHeight/2.0f,(float)screenWidth,(float)screenHeight/2.0f},

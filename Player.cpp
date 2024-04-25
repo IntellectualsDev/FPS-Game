@@ -64,9 +64,11 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     //if a character is colliding with the ground they have friction in the opposing direction of velocity which scales (maybe?)
     //if a character is not colliding with anything they have gravity ontop of their input velocity
     //if a player jumps they gain an impulse to their y velocity
-    cout <<"velocity pre-collision: "<< velocity.x << "," << velocity.y << "," << velocity.z << endl;
 
 
+    //TODO: DELTA TIME ISSUE
+    //possibly have some kind of signal that recognizes user input then stores that in a buffer where the simulation thread can pull from it, only issue is making sure that
+    //things happen in order otherwise its fucked.
     if(velocity.y == 0.0f){
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
@@ -101,9 +103,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         //TODO
         //add weapon slots and check current inventory index to spawn correct bullet
         Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
-                    true,40.0f);
-        //TODO look into ray casting
-//        temp.getBulletModel().transform =  MatrixRotateXYZ((Vector3){ DEG2RAD*temp.getVelocity().x, DEG2RAD*temp.getVelocity().y, DEG2RAD*temp.getVelocity().z});
+                    true,10.0f);
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
@@ -114,33 +114,12 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     playerBox.max = (Vector3){position.x + hitbox.x/2,
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
-//    for(int i = 0;i < terrainList.size();i++){
-//        if(i <= 3){
-//            //TODO fix this
-//            if(i!=4 && CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space && !CheckCollisionBoxes(playerBox,terrainList[i])){
-//                position.y = 2+topBoxVector[i].max.y;//bad code
-//                camera.position.y = position.y;
-//                topCollision = true;
-//            }
-//            else if(CheckCollision(playerBox,terrainList[i],separationVector)){
-//
-//
-//                position = Vector3Add(position,separationVector);
-//                camera.position = position;
-//                camera.target = Vector3Add(camera.target,separationVector);
-//                if(i != 3){
-//
-//                }
-//            }
-//        }
-//    }
     if(crouch){
         position = {0.0f,5.0f,1.0f};
         camera.position = position;
         camera.target = {10.0f, 2.0f, 10.0f};
         velocity = Vector3Zero();
     }
-    cout << "position pre collision: " << position.x << ", " << position.y << ", " << position.z << endl;
     for(auto & i : terrainList){
         if(CheckCollision(playerBox,i,separationVector)){
             position = Vector3Add(position,separationVector);
@@ -149,8 +128,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                                  separationVector.z != 0.0f ? 0.0f : velocity.z};
             camera.position = position;
             camera.target = Vector3Add(camera.target,separationVector);
-            cout << "velocity post collision : " << velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
-            cout << "position post collision: " << position.x << ", " << position.y << ", " << position.z << endl;
         }
     }
     sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), Vector3Scale(hitbox,0.5f));
@@ -190,15 +167,17 @@ vector<Bullet>* Player::getEntities() {
     return &entities;
 }
 
-Vector3 Player::camera_direction(Camera *tcamera,) {
+Vector3 Player::camera_direction(Camera *tcamera) {
     return Vector3Normalize(Vector3Subtract(tcamera->target, tcamera->position));
 }
 
 void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
     for(auto & j : terrainList){
         for(auto & entity : entities){
+            entity.setSweptBulletBox((BoundingBox){{Vector3Subtract(Vector3Min(entity.getPrevPosition(),entity.getPosition()), Vector3Scale(entity.getHitbox(),0.5f))},
+                                     {Vector3Add(Vector3Max(entity.getPrevPosition(),entity.getPosition()), Vector3Scale(entity.getHitbox(),0.5f))}});
             //check for bullet collisions with all terrain
-            if(CheckCollisionBoxes(entity.getBulletBox(), j)) {
+            if(CheckCollisionBoxes(entity.getSweptBulletBox(), j)) {
                 cout << "Hit:" << entity.getPosition().x << " " << entity.getPosition().y << " " << entity.getPosition().z << endl;
                 entity.kill();
                 cout << entity.getAlive() << endl;

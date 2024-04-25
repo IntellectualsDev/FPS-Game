@@ -20,6 +20,7 @@ public:
         hitbox = temp_hitbox;
         alive = temp;
         speed = temp_speed;
+        prevPosition = position;
 //        setBulletModel();
     }
 
@@ -33,8 +34,12 @@ public:
     void setBulletBox(BoundingBox temp);
     void setBulletModel();
     Model getBulletModel();
+    Vector3 getPrevPosition();
     float getSpeed();
+    void setSweptBulletBox(BoundingBox temp);
+    BoundingBox getSweptBulletBox();
 private:
+    BoundingBox sweptBulletBox{};
     float speed;
     Model bulletModel;
     bool alive;

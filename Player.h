@@ -91,6 +91,10 @@ private:
 //    CircularBuffer<inputState> inputBuffer;
     Vector3 separationVector{};
     bool topCollision{};
+    Vector3 scaledGravity = {};
+    Vector3 scaledJump = {};
+    float scaledLateralSpeed;
+    float scaledFriction;
     Vector3 Gravity = {0.0f,-0.05f,0.0f};
     Vector3 Jump = {0.0f,1.0f,0.0f};
     float lateralSpeed = 0.05f;
