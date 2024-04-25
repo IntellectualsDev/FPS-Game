@@ -36,49 +36,72 @@
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer) {
 //Continious collision detection.
 
-    if(CheckCollisionBoxes(playerBox,terrainList[3])){
-        setGrounded(true,dt);
+//    if(CheckCollisionBoxes(playerBox,terrainList[3])){
+//        setGrounded(true,dt);
+//
+//    }
+//    else if(topCollision){
+//        setGrounded(true,dt);
+//        topCollision = false;
+//    }else{
+//        setGrounded(false,dt);
+//        space = false;
+//    }
+//    if(space && grounded && JumpTimer > 5*dt){
+//        JumpTimer = 0.0f;
+//        setGrounded(false,dt);
+//
+//        velocity = (Vector3){((w)-(s))*dt*4 ,((space)*Jump*10*dt),((d)-(a))*dt*4 };
+//    }else if (!grounded){
+//        velocity = (Vector3){((w)-(s))*dt*4 ,velocity.y + Gravity*dt*10,((d)-(a))*dt*4 };
+//    }else{
+//        velocity = (Vector3){((w)-(s))*dt*4 ,0,((d)-(a))*dt*4 };
+//    }
 
+    //always apply gravity
+    //camera_direction accounts for direction
+    //speed of character *velocity vector for input is resulting velocity from movement
+    //if a character is colliding with the ground they have friction in the opposing direction of velocity which scales (maybe?)
+    //if a character is not colliding with anything they have gravity ontop of their input velocity
+    //if a player jumps they gain an impulse to their y velocity
+    cout <<"velocity pre-collision: "<< velocity.x << "," << velocity.y << "," << velocity.z << endl;
+
+
+    if(velocity.y == 0.0f){
+        velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
-    else if(topCollision){
-        setGrounded(true,dt);
-        topCollision = false;
+    velocity = Vector3Add(velocity,Gravity);
+    velocity = Vector3Add(velocity, Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
+    velocity = Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed));
+    velocity = Vector3Add(velocity,Vector3Multiply((Vector3){(float)sprint,0.0f,(float)sprint}, Vector3Scale(velocity,lateralSpeed)));
+
+    if(sprint){
+        camera.fovy = camera.fovy+1.0f;
+        if(camera.fovy > 80.0f){
+            camera.fovy = 80.0f;
+        }
     }else{
-        setGrounded(false,dt);
-        space = false;
+        camera.fovy = camera.fovy-3.0f;
+        if(camera.fovy < 60.0f){
+            camera.fovy = 60.0f;
+        }
     }
-    if(space && grounded && JumpTimer > 5*dt){
-        JumpTimer = 0.0f;
-        setGrounded(false,dt);
-
-        velocity = (Vector3){((w)-(s))*dt*4 ,((space)*Jump*10*dt),((d)-(a))*dt*4 };
-    }else if (!grounded){
-        velocity = (Vector3){((w)-(s))*dt*4 ,velocity.y + Gravity*dt*10,((d)-(a))*dt*4 };
-    }else{
-        velocity = (Vector3){((w)-(s))*dt*4 ,0,((d)-(a))*dt*4 };
-    }
-
     //TODO check for case to set grounded == true
     //TODO implement grounded/jumping movement
     UpdateCameraPro(&camera,
-                    Vector3Multiply((Vector3){velocity.x,velocity.z,velocity.y},(Vector3){(sprint+1.0f), (sprint+1.0f), 1.0f}),//SHIT
+                    (Vector3){velocity.x,velocity.z,velocity.y},//SHIT
                     (Vector3){
                             mouseDelta.x*dt*2.0f ,                            // Rotation: yaw
                             mouseDelta.y*dt*2.0f,                            // Rotation: pitch
                             0.0f                                                // Rotation: roll
                     },
                     GetMouseWheelMove()*dt *2.0f);
-
-
-
-
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
-        cout << "SHOOT!" << endl;
         //TODO
         //add weapon slots and check current inventory index to spawn correct bullet
         Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
-                    true,10.0f);
+                    true,40.0f);
         //TODO look into ray casting
 //        temp.getBulletModel().transform =  MatrixRotateXYZ((Vector3){ DEG2RAD*temp.getVelocity().x, DEG2RAD*temp.getVelocity().y, DEG2RAD*temp.getVelocity().z});
         entities.push_back(temp);
@@ -91,24 +114,57 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     playerBox.max = (Vector3){position.x + hitbox.x/2,
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
-    for(int i = 0;i < terrainList.size();i++){
-        if(i <= 3){
-            //TODO fix this
-            if(i!=4 && CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space && !CheckCollisionBoxes(playerBox,terrainList[i])){
-                position.y = 2+topBoxVector[i].max.y;//bad code
-                camera.position.y = position.y;
-                topCollision = true;
-            }
-            else if(CheckCollision(playerBox,terrainList[i],separationVector)){
-
-
-                position = Vector3Add(position,separationVector);
-                camera.position = position;
-                camera.target = Vector3Add(camera.target,separationVector);
-                if(i != 3){
-
-                }
-            }
+//    for(int i = 0;i < terrainList.size();i++){
+//        if(i <= 3){
+//            //TODO fix this
+//            if(i!=4 && CheckCollisionBoxes(playerBox,topBoxVector[i])&&!space && !CheckCollisionBoxes(playerBox,terrainList[i])){
+//                position.y = 2+topBoxVector[i].max.y;//bad code
+//                camera.position.y = position.y;
+//                topCollision = true;
+//            }
+//            else if(CheckCollision(playerBox,terrainList[i],separationVector)){
+//
+//
+//                position = Vector3Add(position,separationVector);
+//                camera.position = position;
+//                camera.target = Vector3Add(camera.target,separationVector);
+//                if(i != 3){
+//
+//                }
+//            }
+//        }
+//    }
+    if(crouch){
+        position = {0.0f,5.0f,1.0f};
+        camera.position = position;
+        camera.target = {10.0f, 2.0f, 10.0f};
+        velocity = Vector3Zero();
+    }
+    cout << "position pre collision: " << position.x << ", " << position.y << ", " << position.z << endl;
+    for(auto & i : terrainList){
+        if(CheckCollision(playerBox,i,separationVector)){
+            position = Vector3Add(position,separationVector);
+            velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
+                                 separationVector.y != 0.0f ? 0.0f : velocity.y,
+                                 separationVector.z != 0.0f ? 0.0f : velocity.z};
+            camera.position = position;
+            camera.target = Vector3Add(camera.target,separationVector);
+            cout << "velocity post collision : " << velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
+            cout << "position post collision: " << position.x << ", " << position.y << ", " << position.z << endl;
+        }
+    }
+    sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), Vector3Scale(hitbox,0.5f));
+    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), Vector3Scale(hitbox,0.5f));
+    for(auto & i : terrainList){
+        if(CheckCollision(sweptAABB,i,separationVector)){
+            position = Vector3Add(position,separationVector);
+            velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
+                                 separationVector.y != 0.0f ? 0.0f : velocity.y,
+                                 separationVector.z != 0.0f ? 0.0f : velocity.z};
+            camera.position = position;
+            camera.target = Vector3Add(camera.target,separationVector);
+//            cout << "velocity post collision : " << velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
+//            cout << "position post collision: " << position.x << ", " << position.y << ", " << position.z << endl;
         }
     }
     playerBox.min = (Vector3){position.x - hitbox.x/2,
@@ -118,7 +174,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
 
-    updateEntities(dt);
+    updateEntities(dt,terrainList);
 }
 Vector3 Player::getHitBox() {
     return this->hitbox;
@@ -134,11 +190,21 @@ vector<Bullet>* Player::getEntities() {
     return &entities;
 }
 
-Vector3 Player::camera_direction(Camera *tcamera) {
+Vector3 Player::camera_direction(Camera *tcamera,) {
     return Vector3Normalize(Vector3Subtract(tcamera->target, tcamera->position));
 }
 
-void Player::updateEntities(float dt) {
+void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
+    for(auto & j : terrainList){
+        for(auto & entity : entities){
+            //check for bullet collisions with all terrain
+            if(CheckCollisionBoxes(entity.getBulletBox(), j)) {
+                cout << "Hit:" << entity.getPosition().x << " " << entity.getPosition().y << " " << entity.getPosition().z << endl;
+                entity.kill();
+                cout << entity.getAlive() << endl;
+            }
+        }
+    }
     for (int i = 0; i < entities.size(); i++) {
         //Vector3Subtract(entities[i].getPosition(),this->position)
         if(entities[i].getAlive()){
@@ -246,7 +312,6 @@ void Player::setGrounded(bool temp,float dt) {
         grounded = temp;
         if(JumpTimer < 6*dt){
             JumpTimer += dt;
-            cout << JumpTimer << endl;
         }
 
     }else{

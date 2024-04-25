@@ -124,7 +124,6 @@ void Transmitter::transmitPacket(unique_ptr<ENetPacket> packet) {
         uint8_t *temp= packet->data;
         auto temp_packet = flatbuffers::GetRoot<OD_Packet>(temp);
         auto input_size = temp_packet->payload()->payload_CI()->client_inputs()->size();
-        cout << "Input size: "<< input_size << endl;
 //        unique_ptr<BufferHandler> packetBufferHandler = std::make_unique<BufferHandler>(std::move(bufferCopy), packet->dataLength);
 //        if(packetBufferHandler->getPacketView()->payload()->payload_type() == PayloadTypes_ClientInputs){
 //            auto clientInputs = packetBufferHandler->getPacketView()->payload()->payload_as_ClientInputs();

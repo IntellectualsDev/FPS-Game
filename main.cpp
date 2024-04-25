@@ -64,7 +64,7 @@ int main(void)
     BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
     BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.0f + wallHeight/2, 16.0f +wallWidth/2}};
-    BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-1,-floorLength/2},(Vector3){floorLength/2,0,floorLength/2}};
+    BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-2,-floorLength/2},(Vector3){floorLength/2,0,floorLength/2}};
     vector<BoundingBox> terrainVector = {wallBox1,wallBox2,wallBox3,floorBox};
     BoundingBox topBox1 = (BoundingBox){(Vector3){-16.0f - 0.5+0.05f, 4.99f, 0.0f +0.05f-wallLength/2},(Vector3){-16.0f + 0.5-0.05f, 2.5f + wallHeight/2, 0.0f -0.05f+wallLength/2}};
     BoundingBox topBox2 = (BoundingBox){(Vector3){16.0f - 0.5+0.05f, 4.99f, 0.0f +0.05f-wallLength/2},(Vector3){16.0f + 0.5-0.05f, 2.5f + wallHeight/2, 0.0f -0.05f+wallLength/2}};
@@ -202,16 +202,16 @@ int main(void)
                               IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
 
             //TODO put it function or put somewhere else
-            for(int j = 0;j <terrainVector.size();j++){
-                for(int i = 0; i <temp.getEntities()->size();i++){
-                    //check for bullet collisions with all terrain
-                    if(CheckCollisionBoxes(localPlayerBullets[i].getBulletBox(), terrainVector[j])) {
-                        cout << "Hit:" << localPlayerBullets[i].getPosition().x << " " << localPlayerBullets[i].getPosition().y << " " << localPlayerBullets[i].getPosition().z << endl;
-                        localPlayerBullets[i].kill();
-                        cout << localPlayerBullets[i].getAlive() << endl;
-                    }
-                }
-            }
+//            for(int j = 0;j <terrainVector.size();j++){
+//                for(int i = 0; i <temp.getEntities()->size();i++){
+//                    //check for bullet collisions with all terrain
+//                    if(CheckCollisionBoxes(localPlayerBullets[i].getBulletBox(), terrainVector[j])) {
+//                        cout << "Hit:" << localPlayerBullets[i].getPosition().x << " " << localPlayerBullets[i].getPosition().y << " " << localPlayerBullets[i].getPosition().z << endl;
+//                        localPlayerBullets[i].kill();
+//                        cout << localPlayerBullets[i].getAlive() << endl;
+//                    }
+//                }
+//            }
             //TODO : model!!!!!
 
             if(hands.id == 0){

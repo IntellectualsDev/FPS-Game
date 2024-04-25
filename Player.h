@@ -63,7 +63,7 @@ public:
         //size needs to be max allowable rtt
     };
     bool CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector);
-    void updateEntities(float dt);
+    void updateEntities(float dt,vector<BoundingBox> &terrainList);
     Vector3 camera_direction(Camera *tcamera);
     void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer);
     Camera3D * getCamera();
@@ -91,16 +91,19 @@ private:
 //    CircularBuffer<inputState> inputBuffer;
     Vector3 separationVector{};
     bool topCollision{};
-    float Gravity = -0.08;
-    float Jump = 2.5f;
+    Vector3 Gravity = {0.0f,-0.05f,0.0f};
+    Vector3 Jump = {0.0f,1.0f,0.0f};
+    float lateralSpeed = 0.05f;
     bool grounded = false;
     BoundingBox playerBox{};
     float coolDown = 0;
     vector<Bullet> entities = {};
     Camera3D camera{};
     Vector3 position{};
-    Vector3 velocity{};
+    Vector3 velocity = Vector3Zero();
     Vector3 hitbox{};
     bool alive;
     float JumpTimer;
+    float friction = 0.15f;
+    BoundingBox sweptAABB;
 };

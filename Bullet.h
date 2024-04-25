@@ -41,7 +41,7 @@ private:
     BoundingBox bulletBox{};
     Vector3 position{};
     Vector3 velocity{};
-
+    Vector3 prevPosition{};
     Vector3 hitbox{};
 };
 
