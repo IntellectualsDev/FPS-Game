@@ -107,6 +107,13 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
+    if(crouch){
+        position = {0.0f,5.0f,1.0f};
+        camera.position = position;
+        camera.target = {10.0f, 2.0f, 10.0f};
+        velocity = Vector3Zero();
+//TODO:implement sliding/crouching
+    }
     position = camera.position;
     playerBox.min = (Vector3){position.x - hitbox.x/2,
                               position.y - hitbox.y/2-1.0f,
@@ -114,12 +121,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     playerBox.max = (Vector3){position.x + hitbox.x/2,
                               position.y + hitbox.y/2-0.5f,
                               position.z + hitbox.z/2};
-    if(crouch){
-        position = {0.0f,5.0f,1.0f};
-        camera.position = position;
-        camera.target = {10.0f, 2.0f, 10.0f};
-        velocity = Vector3Zero();
-    }
+
     for(auto & i : terrainList){
         if(CheckCollision(playerBox,i,separationVector)){
             position = Vector3Add(position,separationVector);

@@ -59,6 +59,8 @@ public:
                                   (Vector3){position.x + hitbox.x/2,
                                             position.y + hitbox.y/2,
                                             position.z + hitbox.z/2}};
+        crouching = hitbox.y/1.5f;
+        standing = hitbox.y;
 //        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
         //size needs to be max allowable rtt
     };
@@ -89,12 +91,9 @@ public:
 private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
+    float standing;
+    float crouching;
     Vector3 separationVector{};
-    bool topCollision{};
-    Vector3 scaledGravity = {};
-    Vector3 scaledJump = {};
-    float scaledLateralSpeed;
-    float scaledFriction;
     Vector3 Gravity = {0.0f,-0.05f,0.0f};
     Vector3 Jump = {0.0f,1.0f,0.0f};
     float lateralSpeed = 0.05f;
