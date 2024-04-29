@@ -12,7 +12,7 @@
 #include "Bullet.h"
 #include <enet/enet.h>
 #include "Transmitter.h"
-#include "DummyClient.h"
+#include "RemotePlayer.h"
 #include "Gateway.h"
 
 
@@ -50,7 +50,7 @@ int main(void)
     //implement join sequence
 
     //TODO : create new class with appropriate methods, encapsulates pulling from buffer/interpolating
-    FPSClientState player2;
+
 
     //init local player object
     Player temp((Vector3){0,5,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
@@ -103,6 +103,7 @@ int main(void)
     float accumulator = 0.0f;
     float frameTime = 0.0f;
     BoundingBox tempPlayerBox;
+    Vector2 adjustedMouseDelta;
     while (!WindowShouldClose()){
         //increment ticks
 //        if(tick%60 == 0){
@@ -135,10 +136,10 @@ int main(void)
                 //create history of states for remote players
                 //create history of inputs for local client (to dump to server)
             frameTime = GetFrameTime();
-            cout << GetFPS() << endl;
             accumulator += frameTime;
             prevPosition = temp.getPosition();
             prevCamera = *temp.getCamera();
+            adjustedMouseDelta = { GetMouseDelta().x/(frameTime*200.0f), GetMouseDelta().y/(frameTime*200.0f)};
             while(accumulator >= TICK_RATE){
 
                 //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
@@ -148,7 +149,7 @@ int main(void)
                 const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
                 auto dest = CreateDestPoint(builder,destAddr,5450);
                 auto src = CreateSourcePoint(builder,srcAddr,6565);
-                const auto ticked = CreateTick(builder,tick,GetFrameTime());
+                const auto ticked = CreateTick(builder,tick,TICK_RATE);
                 const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
                 vector<flatbuffers::Offset<Buffer>> buffers{};
                 auto buffersVector = builder.CreateVector(buffers);
@@ -204,82 +205,18 @@ int main(void)
                 std::unique_ptr<ENetPacket>finalPacket(packetToSend);
                 //add packet to output buffer
                 outputBuffer.addPacket(std::move(finalPacket));
-                //TODO
+                //TODO!!!!!!!!!!!!!!
                 //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
                 //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
-                temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
+                temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),adjustedMouseDelta,
                                   IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
                                   IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
                 if (++tick >= 60) tick = 0;
-                cout << tick << endl;
 
+                cout << GetMousePosition().x << ", " << GetMousePosition().y <<endl;
                 accumulator -= TICK_RATE;
             }
-            cout << "outside" << endl;
-//            prevPosition = temp.getPosition();
-//            //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
-//            flatbuffers::FlatBufferBuilder builder(1024);
-//            auto destAddr = builder.CreateString("192.168.1.13");
-//            auto srcAddr = builder.CreateString("192.168.56.1");
-//            const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
-//            auto dest = CreateDestPoint(builder,destAddr,5450);
-//            auto src = CreateSourcePoint(builder,srcAddr,6565);
-//            const auto ticked = CreateTick(builder,tick,GetFrameTime());
-//            const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
-//            vector<flatbuffers::Offset<Buffer>> buffers{};
-//            auto buffersVector = builder.CreateVector(buffers);
 //
-//            //read client inputs and add them to the input builder
-//            InputBuilder inputBuilder(builder);
-//            inputBuilder.add_tick(ticked);
-//            inputBuilder.add_a(IsKeyDown(KEY_A));
-//            inputBuilder.add_w(IsKeyDown(KEY_W));
-//            inputBuilder.add_s(IsKeyDown(KEY_S));
-//            inputBuilder.add_d(IsKeyDown(KEY_D));
-//            inputBuilder.add_client_uid(0);
-//            inputBuilder.add_crouch(IsKeyDown(KEY_LEFT_CONTROL));
-//            inputBuilder.add_mouse_delta(mouse);
-//            inputBuilder.add_opponent_buffer_ticks(buffersVector);
-//            inputBuilder.add_previous_position(prev);
-//            inputBuilder.add_shoot(IsMouseButtonDown(MOUSE_BUTTON_LEFT));
-//            inputBuilder.add_space(IsKeyDown(KEY_SPACE));
-//            inputBuilder.add_sprint(IsKeyDown(KEY_LEFT_SHIFT));
-//            auto input = inputBuilder.Finish();
-//
-//
-//            vector<flatbuffers::Offset<Input>> historyBufOffsetVector;
-//            //TODO : append history of inputs
-//            historyBufOffsetVector.push_back(input);
-//            auto bufferVector = builder.CreateVector(historyBufOffsetVector);
-//            auto clients = CreateClientInputs(builder,bufferVector);
-//            PayloadBuilder payloadBuilder(builder);
-//            payloadBuilder.add_payload_CI(clients);
-//            payloadBuilder.add_payload_I(NULL);
-//            payloadBuilder.add_payload_PD(NULL);
-//            payloadBuilder.add_payload_PS(NULL);
-//            auto payload = payloadBuilder.Finish();
-//            OD_PacketBuilder packetBuilder(builder);
-//            packetBuilder.add_reliable(false);
-//            packetBuilder.add_dest_point(dest);
-//            packetBuilder.add_source_point(src);
-//            packetBuilder.add_packet_type(PacketType_Input);
-//            packetBuilder.add_client_id(0);
-//            packetBuilder.add_lobby_number(0);
-//            packetBuilder.add_client_tick(ticked);
-//            packetBuilder.add_payload(payload);
-//            auto packet = packetBuilder.Finish();
-//            builder.Finish(packet);
-//            uint8_t* buffer = builder.GetBufferPointer();
-//            size_t bufferSize = builder.GetSize();
-//            enet_uint32 flags = 0;
-//            if(GetOD_Packet(buffer)->reliable()){
-//                flags = ENET_PACKET_FLAG_RELIABLE;
-//            }
-//            // Create an ENetPacket from the serialized data
-//            ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
-//            std::unique_ptr<ENetPacket>finalPacket(packetToSend);
-//            //add packet to output buffer
-//            outputBuffer.addPacket(std::move(finalPacket));
 //            //TODO
 //            //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
 //            //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
@@ -287,17 +224,6 @@ int main(void)
 //                              IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
 //                              IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
 
-            //TODO put it function or put somewhere else
-//            for(int j = 0;j <terrainVector.size();j++){
-//                for(int i = 0; i <temp.getEntities()->size();i++){
-//                    //check for bullet collisions with all terrain
-//                    if(CheckCollisionBoxes(localPlayerBullets[i].getBulletBox(), terrainVector[j])) {
-//                        cout << "Hit:" << localPlayerBullets[i].getPosition().x << " " << localPlayerBullets[i].getPosition().y << " " << localPlayerBullets[i].getPosition().z << endl;
-//                        localPlayerBullets[i].kill();
-//                        cout << localPlayerBullets[i].getAlive() << endl;
-//                    }
-//                }
-//            }
             //TODO : model!!!!!
             float alpha = accumulator / TICK_RATE;
             Vector3 interpolatedPosition = Vector3Lerp(prevPosition, temp.getPosition(), alpha);
@@ -314,7 +240,8 @@ int main(void)
             interpolatedCam.position = interpolatedPosition;
             interpolatedCam.target = interpolatedCamTarget;
             BeginMode3D(interpolatedCam);
-            //draw bounding boxes
+
+
 
 
 

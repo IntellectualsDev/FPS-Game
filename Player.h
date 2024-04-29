@@ -61,7 +61,7 @@ public:
                                             position.z + hitbox.z/2}};
         crouching = hitbox.y/1.5f;
         standing = hitbox.y;
-        sens = 0.1f;
+        sens = 0.391f;
 //        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
         //size needs to be max allowable rtt
     };

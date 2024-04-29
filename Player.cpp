@@ -34,29 +34,6 @@
 //once you pull out a packet look into the queue and see where the next position should be and interpolate to that position
     //this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer) {
-//Continious collision detection.
-
-//    if(CheckCollisionBoxes(playerBox,terrainList[3])){
-//        setGrounded(true,dt);
-//
-//    }
-//    else if(topCollision){
-//        setGrounded(true,dt);
-//        topCollision = false;
-//    }else{
-//        setGrounded(false,dt);
-//        space = false;
-//    }
-//    if(space && grounded && JumpTimer > 5*dt){
-//        JumpTimer = 0.0f;
-//        setGrounded(false,dt);
-//
-//        velocity = (Vector3){((w)-(s))*dt*4 ,((space)*Jump*10*dt),((d)-(a))*dt*4 };
-//    }else if (!grounded){
-//        velocity = (Vector3){((w)-(s))*dt*4 ,velocity.y + Gravity*dt*10,((d)-(a))*dt*4 };
-//    }else{
-//        velocity = (Vector3){((w)-(s))*dt*4 ,0,((d)-(a))*dt*4 };
-//    }
 
     //always apply gravity
     //camera_direction accounts for direction
@@ -65,10 +42,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     //if a character is not colliding with anything they have gravity ontop of their input velocity
     //if a player jumps they gain an impulse to their y velocity
 
-
-    //TODO: DELTA TIME ISSUE
-    //possibly have some kind of signal that recognizes user input then stores that in a buffer where the simulation thread can pull from it, only issue is making sure that
-    //things happen in order otherwise its fucked.
+    //TODO: decrease x and z velocity if jumps are successive
     if(velocity.y == 0.0f){
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
@@ -88,22 +62,22 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
             camera.fovy = 60.0f;
         }
     }
-    //TODO check for case to set grounded == true
-    //TODO implement grounded/jumping movement
+
     UpdateCameraPro(&camera,
-                    (Vector3){velocity.x,velocity.z,velocity.y},//SHIT
+                    (Vector3){velocity.x,velocity.z,velocity.y},
                     (Vector3){
                             mouseDelta.x*sens ,                            // Rotation: yaw
                             mouseDelta.y*sens,                            // Rotation: pitch
                             0.0f                                                // Rotation: roll
                     },
                     GetMouseWheelMove());
+
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         //TODO
         //add weapon slots and check current inventory index to spawn correct bullet
         Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
-                    true,10.0f);
+                    true,1.0f);
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
@@ -112,7 +86,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         camera.position = position;
         camera.target = {10.0f, 2.0f, 10.0f};
         velocity = Vector3Zero();
-//TODO:implement sliding/crouching
+        //TODO:implement sliding/crouching
     }
     position = camera.position;
     playerBox.min = (Vector3){position.x - hitbox.x/2,
@@ -142,8 +116,6 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                                  separationVector.z != 0.0f ? 0.0f : velocity.z};
             camera.position = position;
             camera.target = Vector3Add(camera.target,separationVector);
-//            cout << "velocity post collision : " << velocity.x << ", " << velocity.y << ", " << velocity.z << endl;
-//            cout << "position post collision: " << position.x << ", " << position.y << ", " << position.z << endl;
         }
     }
     playerBox.min = (Vector3){position.x - hitbox.x/2,
@@ -154,6 +126,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                               position.z + hitbox.z/2};
 
     updateEntities(dt,terrainList);
+    coolDown -= dt;
 }
 Vector3 Player::getHitBox() {
     return this->hitbox;
@@ -191,7 +164,7 @@ void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
         if(entities[i].getAlive()){
             Vector3 temp = Vector3Add(
                     entities[i].getPosition(),
-                    Vector3Scale(entities[i].getVelocity(), dt*entities[i].getSpeed()));
+                    Vector3Scale(entities[i].getVelocity(), entities[i].getSpeed()));
             entities[i].UpdatePosition(temp.x,temp.y,temp.z) ;
         }else{
             entities.erase(entities.begin()+i);
@@ -207,7 +180,6 @@ void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
         entities[i].setBulletBox(tempBoundingBox);
 
     }
-    coolDown -= dt*2;
 
 }
 bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector) {
@@ -288,23 +260,7 @@ void Player::setPosition(Vector3 temp) {
 
 }
 
-void Player::setGrounded(bool temp,float dt) {
-    if(temp){
-        grounded = temp;
-        if(JumpTimer < 6*dt){
-            JumpTimer += dt;
-        }
 
-    }else{
-
-        grounded = temp;
-    }
-
-}
-
-bool Player::getGrounded() {
-    return grounded;
-}
 
 Vector3 Player::getVelocity() {
     return velocity;
