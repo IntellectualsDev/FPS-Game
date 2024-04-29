@@ -93,11 +93,11 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     UpdateCameraPro(&camera,
                     (Vector3){velocity.x,velocity.z,velocity.y},//SHIT
                     (Vector3){
-                            mouseDelta.x*dt*2.0f ,                            // Rotation: yaw
-                            mouseDelta.y*dt*2.0f,                            // Rotation: pitch
+                            mouseDelta.x*sens ,                            // Rotation: yaw
+                            mouseDelta.y*sens,                            // Rotation: pitch
                             0.0f                                                // Rotation: roll
                     },
-                    GetMouseWheelMove()*dt *2.0f);
+                    GetMouseWheelMove());
     if(shoot && coolDown <= 0.0f){
         coolDown = 0.3;
         //TODO
@@ -308,6 +308,18 @@ bool Player::getGrounded() {
 
 Vector3 Player::getVelocity() {
     return velocity;
+}
+
+void Player::setSens(float temp) {
+    if(temp > 0.0f){
+        sens = temp;
+    }else{
+       //do error
+    }
+}
+
+float Player::getSense() {
+    return sens;
 }
 
 

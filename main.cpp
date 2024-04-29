@@ -80,6 +80,7 @@ int main(void)
     //disable cursor
     //init previous position
     Vector3 prevPosition;
+    Camera3D prevCamera;
     //vector of all bullets that have been spawned by local player
     vector<Bullet>& localPlayerBullets = *temp.getEntities();
     //Main Loop
@@ -98,13 +99,17 @@ int main(void)
     Vector3 handsPosition;
     SetTextureFilter(hands,TEXTURE_FILTER_BILINEAR);
     GenTextureMipmaps(&hands);
+    const float TICK_RATE = 1.0f / 60.0f;  // 60 updates per second
+    float accumulator = 0.0f;
+    float frameTime = 0.0f;
+    BoundingBox tempPlayerBox;
     while (!WindowShouldClose()){
         //increment ticks
-        if(tick%60 == 0){
-            tick = 1;
-        }else{
-            tick +=1;
-        }
+//        if(tick%60 == 0){
+//            tick = 1;
+//        }else{
+//            tick +=1;
+//        }
 
         if(initLoading){
             BeginDrawing();
@@ -129,77 +134,158 @@ int main(void)
                 //create history of predicted states for local client (for checking against server states)
                 //create history of states for remote players
                 //create history of inputs for local client (to dump to server)
-
+            frameTime = GetFrameTime();
+            cout << GetFPS() << endl;
+            accumulator += frameTime;
             prevPosition = temp.getPosition();
-            //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
-            flatbuffers::FlatBufferBuilder builder(1024);
-            auto destAddr = builder.CreateString("192.168.1.13");
-            auto srcAddr = builder.CreateString("192.168.56.1");
-            const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
-            auto dest = CreateDestPoint(builder,destAddr,5450);
-            auto src = CreateSourcePoint(builder,srcAddr,6565);
-            const auto ticked = CreateTick(builder,tick,GetFrameTime());
-            const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
-            vector<flatbuffers::Offset<Buffer>> buffers{};
-            auto buffersVector = builder.CreateVector(buffers);
+            prevCamera = *temp.getCamera();
+            while(accumulator >= TICK_RATE){
 
-            //read client inputs and add them to the input builder
-            InputBuilder inputBuilder(builder);
-            inputBuilder.add_tick(ticked);
-            inputBuilder.add_a(IsKeyDown(KEY_A));
-            inputBuilder.add_w(IsKeyDown(KEY_W));
-            inputBuilder.add_s(IsKeyDown(KEY_S));
-            inputBuilder.add_d(IsKeyDown(KEY_D));
-            inputBuilder.add_client_uid(0);
-            inputBuilder.add_crouch(IsKeyDown(KEY_LEFT_CONTROL));
-            inputBuilder.add_mouse_delta(mouse);
-            inputBuilder.add_opponent_buffer_ticks(buffersVector);
-            inputBuilder.add_previous_position(prev);
-            inputBuilder.add_shoot(IsMouseButtonDown(MOUSE_BUTTON_LEFT));
-            inputBuilder.add_space(IsKeyDown(KEY_SPACE));
-            inputBuilder.add_sprint(IsKeyDown(KEY_LEFT_SHIFT));
-            auto input = inputBuilder.Finish();
+                //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
+                flatbuffers::FlatBufferBuilder builder(1024);
+                auto destAddr = builder.CreateString("192.168.1.13");
+                auto srcAddr = builder.CreateString("192.168.56.1");
+                const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
+                auto dest = CreateDestPoint(builder,destAddr,5450);
+                auto src = CreateSourcePoint(builder,srcAddr,6565);
+                const auto ticked = CreateTick(builder,tick,GetFrameTime());
+                const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
+                vector<flatbuffers::Offset<Buffer>> buffers{};
+                auto buffersVector = builder.CreateVector(buffers);
+
+                //read client inputs and add them to the input builder
+                InputBuilder inputBuilder(builder);
+                inputBuilder.add_tick(ticked);
+                inputBuilder.add_a(IsKeyDown(KEY_A));
+                inputBuilder.add_w(IsKeyDown(KEY_W));
+                inputBuilder.add_s(IsKeyDown(KEY_S));
+                inputBuilder.add_d(IsKeyDown(KEY_D));
+                inputBuilder.add_client_uid(0);
+                inputBuilder.add_crouch(IsKeyDown(KEY_LEFT_CONTROL));
+                inputBuilder.add_mouse_delta(mouse);
+                inputBuilder.add_opponent_buffer_ticks(buffersVector);
+                inputBuilder.add_previous_position(prev);
+                inputBuilder.add_shoot(IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+                inputBuilder.add_space(IsKeyDown(KEY_SPACE));
+                inputBuilder.add_sprint(IsKeyDown(KEY_LEFT_SHIFT));
+                auto input = inputBuilder.Finish();
 
 
-            vector<flatbuffers::Offset<Input>> historyBufOffsetVector;
-            //TODO : append history of inputs
-            historyBufOffsetVector.push_back(input);
-            auto bufferVector = builder.CreateVector(historyBufOffsetVector);
-            auto clients = CreateClientInputs(builder,bufferVector);
-            PayloadBuilder payloadBuilder(builder);
-            payloadBuilder.add_payload_CI(clients);
-            payloadBuilder.add_payload_I(NULL);
-            payloadBuilder.add_payload_PD(NULL);
-            payloadBuilder.add_payload_PS(NULL);
-            auto payload = payloadBuilder.Finish();
-            OD_PacketBuilder packetBuilder(builder);
-            packetBuilder.add_reliable(false);
-            packetBuilder.add_dest_point(dest);
-            packetBuilder.add_source_point(src);
-            packetBuilder.add_packet_type(PacketType_Input);
-            packetBuilder.add_client_id(0);
-            packetBuilder.add_lobby_number(0);
-            packetBuilder.add_client_tick(ticked);
-            packetBuilder.add_payload(payload);
-            auto packet = packetBuilder.Finish();
-            builder.Finish(packet);
-            uint8_t* buffer = builder.GetBufferPointer();
-            size_t bufferSize = builder.GetSize();
-            enet_uint32 flags = 0;
-            if(GetOD_Packet(buffer)->reliable()){
-                flags = ENET_PACKET_FLAG_RELIABLE;
+                vector<flatbuffers::Offset<Input>> historyBufOffsetVector;
+                //TODO : append history of inputs
+                historyBufOffsetVector.push_back(input);
+                auto bufferVector = builder.CreateVector(historyBufOffsetVector);
+                auto clients = CreateClientInputs(builder,bufferVector);
+                PayloadBuilder payloadBuilder(builder);
+                payloadBuilder.add_payload_CI(clients);
+                payloadBuilder.add_payload_I(NULL);
+                payloadBuilder.add_payload_PD(NULL);
+                payloadBuilder.add_payload_PS(NULL);
+                auto payload = payloadBuilder.Finish();
+                OD_PacketBuilder packetBuilder(builder);
+                packetBuilder.add_reliable(false);
+                packetBuilder.add_dest_point(dest);
+                packetBuilder.add_source_point(src);
+                packetBuilder.add_packet_type(PacketType_Input);
+                packetBuilder.add_client_id(0);
+                packetBuilder.add_lobby_number(0);
+                packetBuilder.add_client_tick(ticked);
+                packetBuilder.add_payload(payload);
+                auto packet = packetBuilder.Finish();
+                builder.Finish(packet);
+                uint8_t* buffer = builder.GetBufferPointer();
+                size_t bufferSize = builder.GetSize();
+                enet_uint32 flags = 0;
+                if(GetOD_Packet(buffer)->reliable()){
+                    flags = ENET_PACKET_FLAG_RELIABLE;
+                }
+                // Create an ENetPacket from the serialized data
+                ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
+                std::unique_ptr<ENetPacket>finalPacket(packetToSend);
+                //add packet to output buffer
+                outputBuffer.addPacket(std::move(finalPacket));
+                //TODO
+                //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
+                //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
+                temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
+                                  IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
+                                  IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
+                if (++tick >= 60) tick = 0;
+                cout << tick << endl;
+
+                accumulator -= TICK_RATE;
             }
-            // Create an ENetPacket from the serialized data
-            ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
-            std::unique_ptr<ENetPacket>finalPacket(packetToSend);
-            //add packet to output buffer
-            outputBuffer.addPacket(std::move(finalPacket));
-            //TODO
-            //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
-            //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
-            temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
-                              IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
-                              IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
+            cout << "outside" << endl;
+//            prevPosition = temp.getPosition();
+//            //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
+//            flatbuffers::FlatBufferBuilder builder(1024);
+//            auto destAddr = builder.CreateString("192.168.1.13");
+//            auto srcAddr = builder.CreateString("192.168.56.1");
+//            const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
+//            auto dest = CreateDestPoint(builder,destAddr,5450);
+//            auto src = CreateSourcePoint(builder,srcAddr,6565);
+//            const auto ticked = CreateTick(builder,tick,GetFrameTime());
+//            const auto prev = CreateOD_Vector3(builder,prevPosition.x,prevPosition.y,prevPosition.z);
+//            vector<flatbuffers::Offset<Buffer>> buffers{};
+//            auto buffersVector = builder.CreateVector(buffers);
+//
+//            //read client inputs and add them to the input builder
+//            InputBuilder inputBuilder(builder);
+//            inputBuilder.add_tick(ticked);
+//            inputBuilder.add_a(IsKeyDown(KEY_A));
+//            inputBuilder.add_w(IsKeyDown(KEY_W));
+//            inputBuilder.add_s(IsKeyDown(KEY_S));
+//            inputBuilder.add_d(IsKeyDown(KEY_D));
+//            inputBuilder.add_client_uid(0);
+//            inputBuilder.add_crouch(IsKeyDown(KEY_LEFT_CONTROL));
+//            inputBuilder.add_mouse_delta(mouse);
+//            inputBuilder.add_opponent_buffer_ticks(buffersVector);
+//            inputBuilder.add_previous_position(prev);
+//            inputBuilder.add_shoot(IsMouseButtonDown(MOUSE_BUTTON_LEFT));
+//            inputBuilder.add_space(IsKeyDown(KEY_SPACE));
+//            inputBuilder.add_sprint(IsKeyDown(KEY_LEFT_SHIFT));
+//            auto input = inputBuilder.Finish();
+//
+//
+//            vector<flatbuffers::Offset<Input>> historyBufOffsetVector;
+//            //TODO : append history of inputs
+//            historyBufOffsetVector.push_back(input);
+//            auto bufferVector = builder.CreateVector(historyBufOffsetVector);
+//            auto clients = CreateClientInputs(builder,bufferVector);
+//            PayloadBuilder payloadBuilder(builder);
+//            payloadBuilder.add_payload_CI(clients);
+//            payloadBuilder.add_payload_I(NULL);
+//            payloadBuilder.add_payload_PD(NULL);
+//            payloadBuilder.add_payload_PS(NULL);
+//            auto payload = payloadBuilder.Finish();
+//            OD_PacketBuilder packetBuilder(builder);
+//            packetBuilder.add_reliable(false);
+//            packetBuilder.add_dest_point(dest);
+//            packetBuilder.add_source_point(src);
+//            packetBuilder.add_packet_type(PacketType_Input);
+//            packetBuilder.add_client_id(0);
+//            packetBuilder.add_lobby_number(0);
+//            packetBuilder.add_client_tick(ticked);
+//            packetBuilder.add_payload(payload);
+//            auto packet = packetBuilder.Finish();
+//            builder.Finish(packet);
+//            uint8_t* buffer = builder.GetBufferPointer();
+//            size_t bufferSize = builder.GetSize();
+//            enet_uint32 flags = 0;
+//            if(GetOD_Packet(buffer)->reliable()){
+//                flags = ENET_PACKET_FLAG_RELIABLE;
+//            }
+//            // Create an ENetPacket from the serialized data
+//            ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
+//            std::unique_ptr<ENetPacket>finalPacket(packetToSend);
+//            //add packet to output buffer
+//            outputBuffer.addPacket(std::move(finalPacket));
+//            //TODO
+//            //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
+//            //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
+//            temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),GetMouseDelta(),
+//                              IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
+//                              IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
 
             //TODO put it function or put somewhere else
 //            for(int j = 0;j <terrainVector.size();j++){
@@ -213,7 +299,9 @@ int main(void)
 //                }
 //            }
             //TODO : model!!!!!
-
+            float alpha = accumulator / TICK_RATE;
+            Vector3 interpolatedPosition = Vector3Lerp(prevPosition, temp.getPosition(), alpha);
+            Vector3 interpolatedCamTarget = Vector3Lerp(prevCamera.target,temp.getCamera()->target,alpha);
             if(hands.id == 0){
                 cout << "FUCK" << endl;
             }
@@ -222,7 +310,10 @@ int main(void)
             BeginDrawing();
             ClearBackground(RAYWHITE);
             //begin rendering in 3d
-            BeginMode3D(*temp.getCamera());
+            Camera3D interpolatedCam = *temp.getCamera();
+            interpolatedCam.position = interpolatedPosition;
+            interpolatedCam.target = interpolatedCamTarget;
+            BeginMode3D(interpolatedCam);
             //draw bounding boxes
 
 
@@ -234,7 +325,15 @@ int main(void)
                 DrawBoundingBox(topBoxVector[i],RED);
             }
             //draw player bounding box
-            DrawBoundingBox(temp.getPlayerBox(),PINK);
+
+            tempPlayerBox.min = (Vector3){interpolatedPosition.x - temp.getHitBox().x/2,
+                                      interpolatedPosition.y - temp.getHitBox().y/2-1.0f,
+                                      interpolatedPosition.z - temp.getHitBox().z/2};
+            tempPlayerBox.max = (Vector3){interpolatedPosition.x + temp.getHitBox().x/2,
+                                      interpolatedPosition.y + temp.getHitBox().y/2-0.5f,
+                                      interpolatedPosition.z + temp.getHitBox().z/2};
+//            DrawBoundingBox(temp.getPlayerBox(),PINK);
+            DrawBoundingBox(tempPlayerBox,PINK);
             //draw terrain and bullet entities
             //TODO render based on if it is in players FOV
             DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 50.0f, 50.0f }, LIGHTGRAY); // Draw ground
@@ -242,14 +341,14 @@ int main(void)
             DrawCube((Vector3){ 16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, LIME);      // Draw a green wall
             DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, 5.0f, 1.0f, GOLD);      // Draw a yellow wall
 
-            for(int i = 0; i < localPlayerBullets.size(); i++){
+            for(auto & localPlayerBullet : localPlayerBullets){
 
 
-                DrawCube(localPlayerBullets[i].getPosition(),localPlayerBullets[i].getHitbox().x
-                        ,localPlayerBullets[i].getHitbox().y,
-                         localPlayerBullets[i].getHitbox().z,
+                DrawCube(localPlayerBullet.getPosition(),localPlayerBullet.getHitbox().x
+                        ,localPlayerBullet.getHitbox().y,
+                         localPlayerBullet.getHitbox().z,
                          RED);
-                DrawBoundingBox(localPlayerBullets[i].getBulletBox(),BLACK);
+                DrawBoundingBox(localPlayerBullet.getBulletBox(),BLACK);
             }
 //            //            DrawBillboard(*temp.getCamera(),hands, Vector3Scale(Vector3Add(temp.getPosition(),temp.getCamera()->target),2.0f),10.0f,WHITE);
 //            handsPosition = Vector3Subtract(Vector3Add(temp.getCamera()->position, Vector3Scale(temp.getCamera()->target,2.0f*0.5f)),
@@ -279,16 +378,7 @@ int main(void)
 
     return 0;
 }
-void DrawTextureInFrontOfCamera(Camera camera, Texture2D texture, Vector3 position, float size) {
-    // Calculate billboard position
-    Vector3 direction = Vector3Subtract(position, camera.position);
-    Vector2 billboardPos = GetWorldToScreen(Vector3Scale(direction, size),camera);
 
-    // Draw texture centered on billboard position
-    DrawTexturePro(texture, (Rl_Rectangle){ 0.0f, 0.0f, (float)texture.width, (float)texture.height },
-    (Rl_Rectangle){ billboardPos.x - size / 2, billboardPos.y - size / 2, size, size },
-    (Vector2){ size / 2, size / 2 }, 0.0f, WHITE);
-}
 void DrawLoadingScreen() {
     RL_DrawText("Loading...", screenWidth / 2 - MeasureText("Loading...", 20) / 2, screenHeight / 2  + 20, 20, GRAY);
 }

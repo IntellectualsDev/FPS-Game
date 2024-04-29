@@ -61,6 +61,7 @@ public:
                                             position.z + hitbox.z/2}};
         crouching = hitbox.y/1.5f;
         standing = hitbox.y;
+        sens = 0.1f;
 //        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
         //size needs to be max allowable rtt
     };
@@ -80,6 +81,8 @@ public:
     float getJumpTimer();
     BoundingBox getPlayerBox();
     void setPosition(Vector3 temp);
+    void setSens(float temp);
+    float getSense();
 
 //
 //    CircularBuffer<outputState>* getOutputBuffer(){
@@ -91,6 +94,7 @@ public:
 private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
+    float sens;
     float standing;
     float crouching;
     Vector3 separationVector{};
