@@ -65,7 +65,7 @@ public:
         sens = 0.391f;
         //TODO differentiate characters
         if(temp_character == "scout"){
-            body_hitbox = (Vector3){1.0f,3.0f,0.5f};
+            body_hitbox = (Vector3){1.0f,3.0f,1.0f};
             playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2,
                                                 position.y - body_hitbox.y-head_hitbox.y/2,
                                                 position.z - body_hitbox.z / 2},
@@ -129,8 +129,10 @@ public:
 private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
-    Vector3 crouching = {0.0f,1.0f,0.0f};
+    float velocityCrouchCounter = 0.0f;
+    Vector3 crouchingOffset = {0.0f,-2.0f,0.0f};
     float fov;
+    bool crouching = false;
     string character;
     Vector3 head_hitbox{};
     float sens;

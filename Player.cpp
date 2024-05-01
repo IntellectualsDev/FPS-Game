@@ -47,21 +47,36 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
     velocity = Vector3Add(velocity,Gravity);
-    velocity = Vector3Add(velocity, Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
-    velocity = Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed));
+    velocityCrouchCounter -= friction/4.0f;
+    velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
+    velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed));
     velocity = Vector3Add(velocity,Vector3Multiply((Vector3){(float)sprint,0.0f,(float)sprint}, Vector3Scale(velocity,lateralSpeed)));
+    velocity = Vector3Multiply(velocity,(Vector3){velocityCrouchCounter+1.0f,1.0f,velocityCrouchCounter+1.0f});
+//    friction += velocityCrouchCounter/500.0f;
+//    cout << "friction : " << friction << endl;
+//    if(friction >= 0.15f){
+//        friction = 0.15f;
+//    }
 
-    if(sprint){
-        camera.fovy = camera.fovy+1.0f;
-        if(camera.fovy > 80.0f){
-            camera.fovy = 80.0f;
+    if(velocityCrouchCounter <= 0.0f){
+        velocityCrouchCounter = 0.0f;
+    }
+    if(((w || a || s || d || space) && !crouching )|| camera.fovy != fov){
+        if(sprint){
+            camera.fovy = camera.fovy+1.0f;
+            if(camera.fovy > fov*1.2f){
+                camera.fovy = fov*1.2f;
+            }
+        }else{
+            camera.fovy = camera.fovy-3.0f;
+            if(camera.fovy < fov){
+                camera.fovy = fov;
+            }
         }
     }else{
-        camera.fovy = camera.fovy-3.0f;
-        if(camera.fovy < 60.0f){
-            camera.fovy = 60.0f;
-        }
+        camera.fovy = fov;
     }
+
 
     UpdateCameraPro(&camera,
                     (Vector3){velocity.x,velocity.z,velocity.y},
@@ -81,15 +96,26 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
-    if(crouch){
+    if(crouch && !crouching){
 //        position = {0.0f,5.0f,1.0f};
 //        camera.position = position;
 //        camera.target = {10.0f, 2.0f, 10.0f};
 //        velocity = Vector3Zero();
         //TODO:implement sliding/crouching
-        camera.position = Vector3Subtract(camera.position,crouching);
-        camera.target = Vector3Subtract(camera.target,crouching);
-        body_hitbox = Vector3Subtract(body_hitbox,crouching);
+        camera.position = Vector3Add(camera.position,crouchingOffset);
+        camera.target = Vector3Add(camera.target,crouchingOffset);
+        body_hitbox = Vector3Add(body_hitbox,crouchingOffset);
+        crouching = true;
+//        friction = 0.015f;
+        velocityCrouchCounter = sqrt(pow(velocity.x,2)+pow(velocity.z,2));
+        lateralSpeed = lateralSpeed/2.0f;
+    }else if(!crouch && crouching){
+        camera.position = Vector3Subtract(camera.position,crouchingOffset);
+        camera.target = Vector3Subtract(camera.target,crouchingOffset);
+        body_hitbox = Vector3Subtract(body_hitbox,crouchingOffset);
+
+        crouching = false;
+        lateralSpeed = lateralSpeed*2.0f;
     }
     position = camera.position;
     playerBox.min = (Vector3){position.x - body_hitbox.x / 2,
@@ -238,7 +264,6 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
 
         } else if (minSeparation == abs(belowSeparation)) {
             separationVector = { 0.0f, belowSeparation, 0.0f };
-
         } else if (minSeparation == abs(frontSeparation)) {
             separationVector = { 0.0f, 0.0f, frontSeparation };
 
@@ -246,9 +271,16 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
             separationVector = { 0.0f, 0.0f, -behindSeparation };
 
         }
+        if(Vector3Equals(separationVector ,(Vector3){0.0f, belowSeparation, 0.0f })){
+            cout << "grounded" << endl;
+            grounded = true;
+        }else{
+            grounded = false;
+        }
         return true;
+    }else{
+        grounded = false;
     }
-
     return false;
 }
 
