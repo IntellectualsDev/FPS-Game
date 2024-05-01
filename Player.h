@@ -132,17 +132,20 @@ private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
     int cooldownSlidingMax = -1;
-    float velocityCrouchCounter = 0.0f;
+
     Vector3 crouchingOffset = {0.0f,-2.0f,0.0f};
     float fov;
+    float roll = 10.0f;
     bool crouching = false;
+    bool sliding = false;
     string character;
     Vector3 head_hitbox{};
     float sens;
     Vector3 separationVector{};
-    Vector3 Gravity = {0.0f,-0.05f,0.0f};
-    Vector3 Jump = {0.0f,1.0f,0.0f};
+    Vector3 Gravity = {0.0f,-0.03f,0.0f};
+    Vector3 Jump = {0.0f,0.8f,0.0f};
     float lateralSpeed = 0.05f;
+    float airSpeed = 0.01f;
     bool grounded = false;
     BoundingBox playerBox{};
     BoundingBox headbox{};
@@ -155,5 +158,6 @@ private:
     bool alive;
     float JumpTimer;
     float friction = 0.15f;
+    float slidingFriction = friction;
     BoundingBox sweptAABB;
 };

@@ -55,44 +55,46 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         camera.target = Vector3Add(camera.target,crouchingOffset);
         body_hitbox = Vector3Add(body_hitbox,crouchingOffset);
         crouching = true;
-//        friction = 0.015f;
+        if(!sliding && crouch && sprint){
+            sliding = true;
+            camera.up = Vector3RotateByAxisAngle(camera.up, camera_direction(&camera), roll*DEG2RAD);
 
-        if(grounded && sprint && cooldownSlidingMax == -1){
-            velocityCrouchCounter = max(abs(velocity.x),abs(velocity.z))*0.7f;
-            cout << "SLIDING!!!!!!!!!!!!!!!!! "<<velocityCrouchCounter << endl;
-            cooldownSlidingMax = (tick+50)%60;
-        }else{
 
         }
-        lateralSpeed = lateralSpeed/2.0f;
+
+        lateralSpeed = lateralSpeed/3.0f;
     }else if(!crouch && crouching){
         camera.position = Vector3Subtract(camera.position,crouchingOffset);
         camera.target = Vector3Subtract(camera.target,crouchingOffset);
         body_hitbox = Vector3Subtract(body_hitbox,crouchingOffset);
-
         crouching = false;
-        lateralSpeed = lateralSpeed*2.0f;
+        lateralSpeed = lateralSpeed*3.0f;
     }
     if(velocity.y == 0.0f){
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
     velocity = Vector3Add(velocity,Gravity);
 
-    velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
-    velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed));
+    velocity =  sliding ? Vector3Add(velocity,Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, slidingFriction)) :
+                            Vector3Add(velocity,Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
+    velocity = grounded? Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed+fabs(velocity.y)*airSpeed*5)) :
+                         Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},airSpeed*fabs(velocity.y)+0.05f));
     velocity = Vector3Add(velocity,Vector3Multiply((Vector3){(float)sprint,0.0f,(float)sprint}, Vector3Scale(velocity,lateralSpeed)));
-    velocity = Vector3Multiply(velocity,(Vector3){velocityCrouchCounter+1.0f,1.0f,velocityCrouchCounter+1.0f});
-//    friction += velocityCrouchCounter/500.0f;
-//    cout << "friction : " << friction << endl;
-//    if(friction >= 0.15f){
-//        friction = 0.15f;
-//    }
-    velocityCrouchCounter -= friction/4.0f;
-    if(velocityCrouchCounter <= 0.0f){
-        velocityCrouchCounter = 0.0f;
+    cout << velocity.y << endl;
+    if((!crouch || !sprint)&& sliding){
+        sliding = false;
+        camera.up = {0.0f , 1.0f, 0.0f};
+        slidingFriction = friction/5.0f;
     }
-    if(((w || a || s || d || space) && !crouching )|| camera.fovy != fov){
-        if(sprint){
+    if(sliding){
+        slidingFriction += slidingFriction/25.0f;
+        if(slidingFriction >= friction){
+            slidingFriction = friction;
+            camera.up = {0.0f , 1.0f, 0.0f};
+        }
+    }
+    if(((w || a || s || d || space) && !crouching ) || camera.fovy != fov){
+        if(sprint || sliding){
             camera.fovy = camera.fovy+1.0f;
             if(camera.fovy > fov*1.2f){
                 camera.fovy = fov*1.2f;
@@ -161,13 +163,9 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 //                                                                                 body_hitbox.y-head_hitbox.y/2 ,
 //                                                                                 body_hitbox.z / 2});
 //    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), (Vector3){body_hitbox.x / 2,
-    cout <<"Min: " <<sweptAABB.min.y << endl;
-    cout << "Pre: x-" << position.x << ", y-"<< position.y<< ", z-"<< position.z<<endl;
+
     for(auto & i : terrainList){
         if(CheckCollision(sweptAABB,i,separationVector)){
-
-            cout << separationVector.y << endl;
-            cout << "working" << endl;
             position = Vector3Add(position,separationVector);
             velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
                                  separationVector.y != 0.0f ? 0.0f : velocity.y,
@@ -177,7 +175,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         }
 
     }
-    cout << "Post: x-" << position.x << ", y-"<< position.y<< ", z-"<< position.z<<endl;
+
     playerBox.min = (Vector3){position.x - body_hitbox.x / 2.0f,
                               position.y - body_hitbox.y-head_hitbox.y/2.0f,
                               position.z - body_hitbox.z / 2.0f};
