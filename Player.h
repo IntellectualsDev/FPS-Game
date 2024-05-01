@@ -66,34 +66,34 @@ public:
         //TODO differentiate characters
         if(temp_character == "scout"){
             body_hitbox = (Vector3){1.0f,3.0f,1.0f};
-            playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2,
-                                                position.y - body_hitbox.y-head_hitbox.y/2,
-                                                position.z - body_hitbox.z / 2},
-                                      (Vector3){position.x + body_hitbox.x / 2,
-                                                position.y -head_hitbox.y/2,
-                                                position.z + body_hitbox.z / 2}};
+            playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2.0f,
+                                                position.y - body_hitbox.y-head_hitbox.y/2.0f,
+                                                position.z - body_hitbox.z / 2.0f},
+                                      (Vector3){position.x + body_hitbox.x / 2.0f,
+                                                position.y -head_hitbox.y/2.0f,
+                                                position.z + body_hitbox.z / 2.0f}};
             head_hitbox = (Vector3){0.5f,0.5f,0.5f};
-            headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
-                                              position.y-head_hitbox.y/2,
-                                              position.z - head_hitbox.z / 2},
-                                    (Vector3){position.x + head_hitbox.x / 2,
-                                              position.y + head_hitbox.y/2,
-                                              position.z + head_hitbox.z / 2}};
+            headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2.0f,
+                                              position.y-head_hitbox.y/2.0f,
+                                              position.z - head_hitbox.z / 2.0f},
+                                    (Vector3){position.x + head_hitbox.x / 2.0f,
+                                              position.y + head_hitbox.y/2.0f,
+                                              position.z + head_hitbox.z / 2.0f}};
         }else if(temp_character == "heavy"){
             body_hitbox = (Vector3){1.0f,2.0f,1.0f};
-            playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2,
-                                                position.y - body_hitbox.y -head_hitbox.y/2,
-                                                position.z - body_hitbox.z / 2},
-                                      (Vector3){position.x + body_hitbox.x / 2,
-                                                position.y -head_hitbox.y/2,
-                                                position.z + body_hitbox.z / 2}};
+            playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2.0f,
+                                                position.y - body_hitbox.y -head_hitbox.y/2.0f,
+                                                position.z - body_hitbox.z / 2.0f},
+                                      (Vector3){position.x + body_hitbox.x / 2.0f,
+                                                position.y -head_hitbox.y/2.0f,
+                                                position.z + body_hitbox.z / 2.0f}};
             head_hitbox = (Vector3){0.5f,0.5f,0.5f};
-            headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
-                                                position.y-head_hitbox.y/2,
-                                                position.z - head_hitbox.z / 2},
-                                      (Vector3){position.x + head_hitbox.x / 2,
-                                                position.y + head_hitbox.y/2,
-                                                position.z + head_hitbox.z / 2}};
+            headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2.0f,
+                                                position.y-head_hitbox.y/2.0f,
+                                                position.z - head_hitbox.z / 2.0f},
+                                      (Vector3){position.x + head_hitbox.x / 2.0f,
+                                                position.y + head_hitbox.y/2.0f,
+                                                position.z + head_hitbox.z / 2.0f}};
         }
 //        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
         //size needs to be max allowable rtt
@@ -101,7 +101,9 @@ public:
     bool CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& separationVector);
     void updateEntities(float dt,vector<BoundingBox> &terrainList);
     Vector3 camera_direction(Camera *tcamera);
-    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,Vector3 prevPosition,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer);
+    void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,
+                      BoundingBox prevBoundingBox,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,
+                      bool sprint,bool crouch,PacketBuffer& outputBuffer, int tick);
     Camera3D * getCamera();
     Vector3 getBodyHitBox();
     Vector3 getHeadHitBox();
@@ -129,6 +131,7 @@ public:
 private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
+    int cooldownSlidingMax = -1;
     float velocityCrouchCounter = 0.0f;
     Vector3 crouchingOffset = {0.0f,-2.0f,0.0f};
     float fov;

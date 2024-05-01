@@ -21,19 +21,19 @@
 //TODO IMPLEMENT INPUT BUFFER FOR PACKETS
 //on reception of a packet read the header (idk)
 //on SNAPSHOT:
-    //parse the packet and place the other player packet into its input buffer
-    //parse the packet and find the part relating to the local player
-    //check the tick number of the packet and (MATH) determine which local tick that is with the dt parameter
-    //check the packet you locally predicted against the received packet and if they are the same then set the tail of the buffer to that packet
-    //if the states are different then you must revert to that state
+//parse the packet and place the other player packet into its input buffer
+//parse the packet and find the part relating to the local player
+//check the tick number of the packet and (MATH) determine which local tick that is with the dt parameter
+//check the packet you locally predicted against the received packet and if they are the same then set the tail of the buffer to that packet
+//if the states are different then you must revert to that state
 //TODO INTERPOLATE OTHER PLAYER
 //make a class inheriting entity and define it to only be updated according to packest recieved from the server
 //it should have a buffer (queue) of snapshot packets from the server and render a (MATH) amount of time behind the most recently recieved packet
 //it should have x y z positions and direction x y z
 //it also has a vector of bullet entities that will be rendered in the main loop
 //once you pull out a packet look into the queue and see where the next position should be and interpolate to that position
-    //this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
-void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, Vector3 prevPosition, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer) {
+//this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
+void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, BoundingBox prevBoundingBox, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer,int tick) {
 
     //always apply gravity
     //camera_direction accounts for direction
@@ -41,13 +41,43 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     //if a character is colliding with the ground they have friction in the opposing direction of velocity which scales (maybe?)
     //if a character is not colliding with anything they have gravity ontop of their input velocity
     //if a player jumps they gain an impulse to their y velocity
-
     //TODO: decrease x and z velocity if jumps are successive
+    if(tick == cooldownSlidingMax){
+        cooldownSlidingMax = -1;
+    }
+    if(crouch && !crouching){
+//        position = {0.0f,5.0f,1.0f};
+//        camera.position = position;
+//        camera.target = {10.0f, 2.0f, 10.0f};
+//        velocity = Vector3Zero();
+        //TODO:implement sliding/crouching
+        camera.position = Vector3Add(camera.position,crouchingOffset);
+        camera.target = Vector3Add(camera.target,crouchingOffset);
+        body_hitbox = Vector3Add(body_hitbox,crouchingOffset);
+        crouching = true;
+//        friction = 0.015f;
+
+        if(grounded && sprint && cooldownSlidingMax == -1){
+            velocityCrouchCounter = max(abs(velocity.x),abs(velocity.z))*0.7f;
+            cout << "SLIDING!!!!!!!!!!!!!!!!! "<<velocityCrouchCounter << endl;
+            cooldownSlidingMax = (tick+50)%60;
+        }else{
+
+        }
+        lateralSpeed = lateralSpeed/2.0f;
+    }else if(!crouch && crouching){
+        camera.position = Vector3Subtract(camera.position,crouchingOffset);
+        camera.target = Vector3Subtract(camera.target,crouchingOffset);
+        body_hitbox = Vector3Subtract(body_hitbox,crouchingOffset);
+
+        crouching = false;
+        lateralSpeed = lateralSpeed*2.0f;
+    }
     if(velocity.y == 0.0f){
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }
     velocity = Vector3Add(velocity,Gravity);
-    velocityCrouchCounter -= friction/4.0f;
+
     velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)-(velocity.x),0.0f,(float)-(velocity.z)}, friction));
     velocity = Vector3Add(velocity,Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed));
     velocity = Vector3Add(velocity,Vector3Multiply((Vector3){(float)sprint,0.0f,(float)sprint}, Vector3Scale(velocity,lateralSpeed)));
@@ -57,7 +87,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
 //    if(friction >= 0.15f){
 //        friction = 0.15f;
 //    }
-
+    velocityCrouchCounter -= friction/4.0f;
     if(velocityCrouchCounter <= 0.0f){
         velocityCrouchCounter = 0.0f;
     }
@@ -77,7 +107,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         camera.fovy = fov;
     }
 
-
+    Vector3 prevPosition = position;
     UpdateCameraPro(&camera,
                     (Vector3){velocity.x,velocity.z,velocity.y},
                     (Vector3){
@@ -96,55 +126,48 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
-    if(crouch && !crouching){
-//        position = {0.0f,5.0f,1.0f};
-//        camera.position = position;
-//        camera.target = {10.0f, 2.0f, 10.0f};
-//        velocity = Vector3Zero();
-        //TODO:implement sliding/crouching
-        camera.position = Vector3Add(camera.position,crouchingOffset);
-        camera.target = Vector3Add(camera.target,crouchingOffset);
-        body_hitbox = Vector3Add(body_hitbox,crouchingOffset);
-        crouching = true;
-//        friction = 0.015f;
-        velocityCrouchCounter = sqrt(pow(velocity.x,2)+pow(velocity.z,2));
-        lateralSpeed = lateralSpeed/2.0f;
-    }else if(!crouch && crouching){
-        camera.position = Vector3Subtract(camera.position,crouchingOffset);
-        camera.target = Vector3Subtract(camera.target,crouchingOffset);
-        body_hitbox = Vector3Subtract(body_hitbox,crouchingOffset);
 
-        crouching = false;
-        lateralSpeed = lateralSpeed*2.0f;
-    }
+
     position = camera.position;
-    playerBox.min = (Vector3){position.x - body_hitbox.x / 2,
-                              position.y - body_hitbox.y-head_hitbox.y/2 ,
-                              position.z - body_hitbox.z / 2};
-    playerBox.max = (Vector3){position.x + body_hitbox.x / 2,
-                              position.y-head_hitbox.y/2,
-                              position.z + body_hitbox.z / 2};
-    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
-                                      position.y-head_hitbox.y/2,
-                                      position.z - head_hitbox.z / 2},
-                            (Vector3){position.x + head_hitbox.x / 2,
-                                      position.y + head_hitbox.y/2,
-                                      position.z + head_hitbox.z / 2}};
+    playerBox.min = (Vector3){position.x - body_hitbox.x / 2.0f,
+                              position.y - body_hitbox.y-head_hitbox.y/2.0f ,
+                              position.z - body_hitbox.z / 2.0f};
+    playerBox.max = (Vector3){position.x + body_hitbox.x / 2.0f,
+                              position.y-head_hitbox.y/2.0f,
+                              position.z + body_hitbox.z / 2.0f};
+    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2.0f,
+                                      position.y-head_hitbox.y/2.0f,
+                                      position.z - head_hitbox.z / 2.0f},
+                            (Vector3){position.x + head_hitbox.x / 2.0f,
+                                      position.y + head_hitbox.y/2.0f,
+                                      position.z + head_hitbox.z / 2.0f}};
 
-    for(auto & i : terrainList){
-        if(CheckCollision(playerBox,i,separationVector)){
-            position = Vector3Add(position,separationVector);
-            velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
-                                 separationVector.y != 0.0f ? 0.0f : velocity.y,
-                                 separationVector.z != 0.0f ? 0.0f : velocity.z};
-            camera.position = position;
-            camera.target = Vector3Add(camera.target,separationVector);
-        }
-    }
-    sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), Vector3Scale(body_hitbox, 0.5f));
-    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), Vector3Scale(body_hitbox, 0.5f));
+    sweptAABB.min = Vector3Min(prevBoundingBox.min,playerBox.min);
+    sweptAABB.max = Vector3Max(prevBoundingBox.max,playerBox.max);
+
+    grounded = false;
+//    for(auto & i : terrainList){
+//        if(CheckCollision(playerBox,i,separationVector)){
+//            position = Vector3Add(position,separationVector);
+//            velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
+//                                 separationVector.y != 0.0f ? 0.0f : velocity.y,
+//                                 separationVector.z != 0.0f ? 0.0f : velocity.z};
+//            camera.position = position;
+//            camera.target = Vector3Add(camera.target,separationVector);
+//        }
+//    }
+
+//    sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), (Vector3){body_hitbox.x / 2,
+//                                                                                 body_hitbox.y-head_hitbox.y/2 ,
+//                                                                                 body_hitbox.z / 2});
+//    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), (Vector3){body_hitbox.x / 2,
+    cout <<"Min: " <<sweptAABB.min.y << endl;
+    cout << "Pre: x-" << position.x << ", y-"<< position.y<< ", z-"<< position.z<<endl;
     for(auto & i : terrainList){
         if(CheckCollision(sweptAABB,i,separationVector)){
+
+            cout << separationVector.y << endl;
+            cout << "working" << endl;
             position = Vector3Add(position,separationVector);
             velocity = (Vector3){separationVector.x != 0.0f ? 0.0f : velocity.x,
                                  separationVector.y != 0.0f ? 0.0f : velocity.y,
@@ -152,19 +175,21 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
             camera.position = position;
             camera.target = Vector3Add(camera.target,separationVector);
         }
+
     }
-    playerBox.min = (Vector3){position.x - body_hitbox.x / 2,
-                              position.y - body_hitbox.y-head_hitbox.y/2,
-                              position.z - body_hitbox.z / 2};
-    playerBox.max = (Vector3){position.x + body_hitbox.x / 2,
-                              position.y -head_hitbox.y/2,
-                              position.z + body_hitbox.z / 2};
-    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
-                                      position.y-head_hitbox.y/2,
-                                      position.z - head_hitbox.z / 2},
-                            (Vector3){position.x + head_hitbox.x / 2,
-                                      position.y + head_hitbox.y/2,
-                                      position.z + head_hitbox.z / 2}};
+    cout << "Post: x-" << position.x << ", y-"<< position.y<< ", z-"<< position.z<<endl;
+    playerBox.min = (Vector3){position.x - body_hitbox.x / 2.0f,
+                              position.y - body_hitbox.y-head_hitbox.y/2.0f,
+                              position.z - body_hitbox.z / 2.0f};
+    playerBox.max = (Vector3){position.x + body_hitbox.x / 2.0f,
+                              position.y -head_hitbox.y/2.0f,
+                              position.z + body_hitbox.z / 2.0f};
+    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2.0f,
+                                      position.y-head_hitbox.y/2.0f,
+                                      position.z - head_hitbox.z / 2.0f},
+                            (Vector3){position.x + head_hitbox.x / 2.0f,
+                                      position.y + head_hitbox.y/2.0f,
+                                      position.z + head_hitbox.z / 2.0f}};
 
     updateEntities(dt,terrainList);
     coolDown -= dt;
@@ -191,7 +216,7 @@ void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
     for(auto & j : terrainList){
         for(auto & entity : entities){
             entity.setSweptBulletBox((BoundingBox){{Vector3Subtract(Vector3Min(entity.getPrevPosition(),entity.getPosition()), Vector3Scale(entity.getHitbox(),0.5f))},
-                                     {Vector3Add(Vector3Max(entity.getPrevPosition(),entity.getPosition()), Vector3Scale(entity.getHitbox(),0.5f))}});
+                                                   {Vector3Add(Vector3Max(entity.getPrevPosition(),entity.getPosition()), Vector3Scale(entity.getHitbox(),0.5f))}});
             //check for bullet collisions with all terrain
             if(CheckCollisionBoxes(entity.getSweptBulletBox(), j)) {
                 cout << "Hit:" << entity.getPosition().x << " " << entity.getPosition().y << " " << entity.getPosition().z << endl;
@@ -213,11 +238,11 @@ void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
 
         }
         BoundingBox tempBoundingBox = (BoundingBox){Vector3Subtract((Vector3){entities[i].getPosition().x - entities[i].getHitbox().x/2,
-                                                              entities[i].getPosition().y - entities[i].getHitbox().y/2,
-                                                              entities[i].getPosition().z - entities[i].getHitbox().z/2},entities[i].getRotation()),
-                                  Vector3Add((Vector3){entities[i].getPosition().x + entities[i].getHitbox().x/2,
-                                            entities[i].getPosition().y+ entities[i].getHitbox().y/2,
-                                            entities[i].getPosition().z + entities[i].getHitbox().z/2},entities[i].getRotation())};
+                                                                              entities[i].getPosition().y - entities[i].getHitbox().y/2,
+                                                                              entities[i].getPosition().z - entities[i].getHitbox().z/2},entities[i].getRotation()),
+                                                    Vector3Add((Vector3){entities[i].getPosition().x + entities[i].getHitbox().x/2,
+                                                                         entities[i].getPosition().y+ entities[i].getHitbox().y/2,
+                                                                         entities[i].getPosition().z + entities[i].getHitbox().z/2},entities[i].getRotation())};
         entities[i].setBulletBox(tempBoundingBox);
 
     }
@@ -272,14 +297,13 @@ bool Player::CheckCollision(BoundingBox playerBB, BoundingBox wallBB, Vector3& s
 
         }
         if(Vector3Equals(separationVector ,(Vector3){0.0f, belowSeparation, 0.0f })){
-            cout << "grounded" << endl;
             grounded = true;
-        }else{
-            grounded = false;
+
         }
         return true;
-    }else{
-        grounded = false;
+
+
+
     }
     return false;
 }
@@ -317,7 +341,7 @@ void Player::setSens(float temp) {
     if(temp > 0.0f){
         sens = temp;
     }else{
-       //do error
+        //do error
     }
 }
 
@@ -338,7 +362,3 @@ Vector3 Player::getHeadHitBox() {
 BoundingBox Player::getHeadBox() {
     return headbox;
 }
-
-
-
-

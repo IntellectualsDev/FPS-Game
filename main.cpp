@@ -222,8 +222,8 @@ int main(void)
                 //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
                 //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
                 temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),adjustedMouseDelta,
-                                  IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
-                                  IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),*outputBuffer);
+                                  IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),temp.getPlayerBox(),terrainVector,topBoxVector,
+                                  IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),*outputBuffer,tick);
 
                 if (++tick >= 60) tick = 0;
                 accumulator -= TICK_RATE;
