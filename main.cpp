@@ -14,6 +14,8 @@
 #include "Transmitter.h"
 #include "RemotePlayer.h"
 #include "Gateway.h"
+#include "flatbuffers/flatbuffer_builder.h"
+#include "game_state_generated.h"
 
 
 //------------------------------------------------------------------------------------
@@ -26,6 +28,12 @@ bool isNestedMenu = false;
 Rl_Rectangle singlePlayerBtnRect, multiPlayerBtnRect, settingsBtnRect, aboutBtnRect, quitBtnRect, accountBtnRect;
 int screenWidth;
 int screenHeight;
+//TODO DYNAMICALLY FIND CLIENT IP
+string clientIP;
+string serverIP;
+
+BoundingBox tempHeadBox;
+
 void DrawLoadingScreen();
 void DrawMainMenu(Vector2 mousePos);
 void DrawNestedMenu(Rl_Rectangle btnRect);
@@ -33,6 +41,8 @@ void DrawNestedMenu(Rl_Rectangle btnRect);
 
 int main(void)
 {
+    serverIP ="192.168.1.13";
+    clientIP = "192.168.56.1";
     //init enet
     if (enet_initialize() != 0) {
         std::cerr << "Failed to initialize ENet\n";
@@ -41,10 +51,10 @@ int main(void)
     atexit (enet_deinitialize);
 
     //init buffers and threads for transmitting and recieving packets
-    PacketBuffer outputBuffer(consoleMutex);
-    Transmitter transmitter("192.168.56.1",5452,outputBuffer,consoleMutex);
-    PacketBuffer inputBuffer(consoleMutex);
-    Gateway gateway("192.168.56.1",5453,inputBuffer);
+    auto* outputBuffer = new PacketBuffer;
+//    Transmitter transmitter(clientIP,5452,outputBuffer,consoleMutex,serverIP,5450);
+//    auto* inputBuffer = new PacketBuffer;
+//    Gateway gateway(clientIP,5453,inputBuffer);
 
     //TODO
     //implement join sequence
@@ -53,7 +63,7 @@ int main(void)
 
 
     //init local player object
-    Player temp((Vector3){0,5,1},(Vector3){0,0,0},(Vector3){1.0f,2.0f,1.0f});
+    Player temp((Vector3){0.0f,20.0f,0.0f},"scout",60.0f);
 
     //TODO : create tiling so level design can be an easier workflow
     //init terrain vector
@@ -85,8 +95,8 @@ int main(void)
     vector<Bullet>& localPlayerBullets = *temp.getEntities();
     //Main Loop
     //START THE TRANSMITTER AND GATEWAY
-    transmitter.start();
-    gateway.start();
+//    transmitter.start();
+//    gateway.start();
     //init menu button hitboxes
     singlePlayerBtnRect = { 100, 200, 200, 50 };
     multiPlayerBtnRect = { 100, 260, 200, 50 };
@@ -140,8 +150,16 @@ int main(void)
 
                 //create flatbuffer builder and create the source and destination address as well as the tick object and previous position
                 flatbuffers::FlatBufferBuilder builder(1024);
-                auto destAddr = builder.CreateString("192.168.1.13");
-                auto srcAddr = builder.CreateString("192.168.56.1");
+                
+                
+                
+                //SERVER ADDRESS !!!!!!!!!!!!!!!
+                auto destAddr = builder.CreateString(serverIP);
+                
+                //SOURCE ADDRESS !!!!!!!!!!!!!!!!!!
+                auto srcAddr = builder.CreateString(clientIP);
+
+
                 const auto mouse = CreateOD_Vector2(builder,GetMouseDelta().x,GetMouseDelta().y);
                 auto dest = CreateDestPoint(builder,destAddr,5450);
                 auto src = CreateSourcePoint(builder,srcAddr,6565);
@@ -197,19 +215,17 @@ int main(void)
                     flags = ENET_PACKET_FLAG_RELIABLE;
                 }
                 // Create an ENetPacket from the serialized data
-                ENetPacket* packetToSend = enet_packet_create(buffer, bufferSize, flags);
-                std::unique_ptr<ENetPacket>finalPacket(packetToSend);
+                std::unique_ptr<ENetPacket>finalPacket(enet_packet_create(buffer, bufferSize, flags));
                 //add packet to output buffer
-                outputBuffer.addPacket(std::move(finalPacket));
+//                outputBuffer->addPacket(std::move(finalPacket));
                 //TODO!!!!!!!!!!!!!!
                 //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
                 //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
                 temp.UpdatePlayer(IsKeyDown(KEY_W),IsKeyDown(KEY_A),IsKeyDown(KEY_S),IsKeyDown(KEY_D),adjustedMouseDelta,
                                   IsMouseButtonDown(MOUSE_BUTTON_LEFT), IsKeyDown(KEY_SPACE),GetFrameTime(),prevPosition,terrainVector,topBoxVector,
-                                  IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),outputBuffer);
-                if (++tick >= 60) tick = 0;
+                                  IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),*outputBuffer);
 
-                cout << GetMousePosition().x << ", " << GetMousePosition().y <<endl;
+                if (++tick >= 60) tick = 0;
                 accumulator -= TICK_RATE;
             }
 //
@@ -247,13 +263,24 @@ int main(void)
             }
             //draw player bounding box
 
-            tempPlayerBox.min = (Vector3){interpolatedPosition.x - temp.getHitBox().x/2,
-                                      interpolatedPosition.y - temp.getHitBox().y/2-1.0f,
-                                      interpolatedPosition.z - temp.getHitBox().z/2};
-            tempPlayerBox.max = (Vector3){interpolatedPosition.x + temp.getHitBox().x/2,
-                                      interpolatedPosition.y + temp.getHitBox().y/2-0.5f,
-                                      interpolatedPosition.z + temp.getHitBox().z/2};
+            tempPlayerBox.min = (Vector3){interpolatedPosition.x - temp.getBodyHitBox().x / 2,
+                                          interpolatedPosition.y - temp.getBodyHitBox().y -temp.getHeadHitBox().y/2,
+                                      interpolatedPosition.z - temp.getBodyHitBox().z / 2};
+            tempPlayerBox.max = (Vector3){interpolatedPosition.x + temp.getBodyHitBox().x / 2,
+                                          interpolatedPosition.y -temp.getHeadHitBox().y/2,
+                                      interpolatedPosition.z + temp.getBodyHitBox().z / 2};
+            tempHeadBox.min = (Vector3){interpolatedPosition.x - temp.getHeadHitBox().x / 2,
+                                          interpolatedPosition.y - temp.getHeadHitBox().y / 2,
+                                          interpolatedPosition.z - temp.getHeadHitBox().z / 2};
+            tempHeadBox.max = (Vector3){interpolatedPosition.x + temp.getHeadHitBox().x / 2,
+                                          interpolatedPosition.y + temp.getHeadHitBox().y/2,
+                                          interpolatedPosition.z + temp.getHeadHitBox().z / 2};
+//            tempPlayerBox.min = Vector3Subtract(interpolatedPosition,temp.getPlayerBox().min);
+//            tempPlayerBox.max = Vector3Add(interpolatedPosition,temp.getPlayerBox().max);
+//            tempHeadBox.min = Vector3Subtract(interpolatedPosition,temp.getHeadBox().min);
+//            tempHeadBox.max = Vector3Add(interpolatedPosition,temp.getHeadBox().max);
 //            DrawBoundingBox(temp.getPlayerBox(),PINK);
+            DrawBoundingBox(tempHeadBox,BLACK);
             DrawBoundingBox(tempPlayerBox,PINK);
             //draw terrain and bullet entities
             //TODO render based on if it is in players FOV

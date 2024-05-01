@@ -82,19 +82,28 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         //TODO deque object instead of vector
     }
     if(crouch){
-        position = {0.0f,5.0f,1.0f};
-        camera.position = position;
-        camera.target = {10.0f, 2.0f, 10.0f};
-        velocity = Vector3Zero();
+//        position = {0.0f,5.0f,1.0f};
+//        camera.position = position;
+//        camera.target = {10.0f, 2.0f, 10.0f};
+//        velocity = Vector3Zero();
         //TODO:implement sliding/crouching
+        camera.position = Vector3Subtract(camera.position,crouching);
+        camera.target = Vector3Subtract(camera.target,crouching);
+        body_hitbox = Vector3Subtract(body_hitbox,crouching);
     }
     position = camera.position;
-    playerBox.min = (Vector3){position.x - hitbox.x/2,
-                              position.y - hitbox.y/2-1.0f,
-                              position.z - hitbox.z/2};
-    playerBox.max = (Vector3){position.x + hitbox.x/2,
-                              position.y + hitbox.y/2-0.5f,
-                              position.z + hitbox.z/2};
+    playerBox.min = (Vector3){position.x - body_hitbox.x / 2,
+                              position.y - body_hitbox.y-head_hitbox.y/2 ,
+                              position.z - body_hitbox.z / 2};
+    playerBox.max = (Vector3){position.x + body_hitbox.x / 2,
+                              position.y-head_hitbox.y/2,
+                              position.z + body_hitbox.z / 2};
+    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
+                                      position.y-head_hitbox.y/2,
+                                      position.z - head_hitbox.z / 2},
+                            (Vector3){position.x + head_hitbox.x / 2,
+                                      position.y + head_hitbox.y/2,
+                                      position.z + head_hitbox.z / 2}};
 
     for(auto & i : terrainList){
         if(CheckCollision(playerBox,i,separationVector)){
@@ -106,8 +115,8 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
             camera.target = Vector3Add(camera.target,separationVector);
         }
     }
-    sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), Vector3Scale(hitbox,0.5f));
-    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), Vector3Scale(hitbox,0.5f));
+    sweptAABB.min = Vector3Subtract(Vector3Min(prevPosition,position), Vector3Scale(body_hitbox, 0.5f));
+    sweptAABB.max = Vector3Add(Vector3Max(prevPosition,position), Vector3Scale(body_hitbox, 0.5f));
     for(auto & i : terrainList){
         if(CheckCollision(sweptAABB,i,separationVector)){
             position = Vector3Add(position,separationVector);
@@ -118,18 +127,24 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
             camera.target = Vector3Add(camera.target,separationVector);
         }
     }
-    playerBox.min = (Vector3){position.x - hitbox.x/2,
-                              position.y - hitbox.y/2-1.0f,
-                              position.z - hitbox.z/2};
-    playerBox.max = (Vector3){position.x + hitbox.x/2,
-                              position.y + hitbox.y/2-0.5f,
-                              position.z + hitbox.z/2};
+    playerBox.min = (Vector3){position.x - body_hitbox.x / 2,
+                              position.y - body_hitbox.y-head_hitbox.y/2,
+                              position.z - body_hitbox.z / 2};
+    playerBox.max = (Vector3){position.x + body_hitbox.x / 2,
+                              position.y -head_hitbox.y/2,
+                              position.z + body_hitbox.z / 2};
+    headbox = (BoundingBox){(Vector3){position.x - head_hitbox.x / 2,
+                                      position.y-head_hitbox.y/2,
+                                      position.z - head_hitbox.z / 2},
+                            (Vector3){position.x + head_hitbox.x / 2,
+                                      position.y + head_hitbox.y/2,
+                                      position.z + head_hitbox.z / 2}};
 
     updateEntities(dt,terrainList);
     coolDown -= dt;
 }
-Vector3 Player::getHitBox() {
-    return this->hitbox;
+Vector3 Player::getBodyHitBox() {
+    return this->body_hitbox;
 }
 Camera3D * Player::getCamera(){
     return &camera;
@@ -276,6 +291,20 @@ void Player::setSens(float temp) {
 
 float Player::getSense() {
     return sens;
+}
+float Player::getFOV(){
+    return fov;
+}
+void Player::setFOV(float temp){
+    fov = temp;
+}
+
+Vector3 Player::getHeadHitBox() {
+    return head_hitbox;
+}
+
+BoundingBox Player::getHeadBox() {
+    return headbox;
 }
 
 

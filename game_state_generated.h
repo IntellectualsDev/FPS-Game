@@ -545,8 +545,8 @@ struct Tick FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
     VT_DT = 6,
     VT_WRAP_AROUND = 8
   };
-  uint32_t tick_number() const {
-    return GetField<uint32_t>(VT_TICK_NUMBER, 0);
+  int32_t tick_number() const {
+    return GetField<int32_t>(VT_TICK_NUMBER, 0);
   }
   float dt() const {
     return GetField<float>(VT_DT, 0.0f);
@@ -556,7 +556,7 @@ struct Tick FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyField<uint32_t>(verifier, VT_TICK_NUMBER, 4) &&
+           VerifyField<int32_t>(verifier, VT_TICK_NUMBER, 4) &&
            VerifyField<float>(verifier, VT_DT, 4) &&
            VerifyField<int32_t>(verifier, VT_WRAP_AROUND, 4) &&
            verifier.EndTable();
@@ -567,8 +567,8 @@ struct TickBuilder {
   typedef Tick Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
-  void add_tick_number(uint32_t tick_number) {
-    fbb_.AddElement<uint32_t>(Tick::VT_TICK_NUMBER, tick_number, 0);
+  void add_tick_number(int32_t tick_number) {
+    fbb_.AddElement<int32_t>(Tick::VT_TICK_NUMBER, tick_number, 0);
   }
   void add_dt(float dt) {
     fbb_.AddElement<float>(Tick::VT_DT, dt, 0.0f);
@@ -589,7 +589,7 @@ struct TickBuilder {
 
 inline ::flatbuffers::Offset<Tick> CreateTick(
     ::flatbuffers::FlatBufferBuilder &_fbb,
-    uint32_t tick_number = 0,
+    int32_t tick_number = 0,
     float dt = 0.0f,
     int32_t wrap_around = 0) {
   TickBuilder builder_(_fbb);

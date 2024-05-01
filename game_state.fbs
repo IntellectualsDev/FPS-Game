@@ -48,7 +48,7 @@ table DestPoint {
 }
 // for both the client and server
 table Tick{
-    tick_number: uint;
+    tick_number: int;
     dt: float;
     wrap_around: int;
 }
