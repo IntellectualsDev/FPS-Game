@@ -76,8 +76,8 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         coolDown = 0.3;
         //TODO
         //add weapon slots and check current inventory index to spawn correct bullet
-        Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),(Vector3){0.1f,0.1f,0.1f},
-                    true,1.0f);
+        Bullet temp(Vector3Add(camera.position, Vector3Scale(camera_direction(&camera),0.7f)), Vector3Scale(camera_direction(&camera),5.0f),
+                    Vector3Scale((Vector3){0.1f,0.1f,0.1f},10.0f),true,1.0f,(Vector3){0.0f,0.0f,0.0f});// TODO figure out how to rotate hitboxes
         entities.push_back(temp);
         //TODO deque object instead of vector
     }
@@ -171,12 +171,12 @@ void Player::updateEntities(float dt,vector<BoundingBox> &terrainList) {
 
 
         }
-        BoundingBox tempBoundingBox = (BoundingBox){(Vector3){entities[i].getPosition().x - entities[i].getHitbox().x/2,
+        BoundingBox tempBoundingBox = (BoundingBox){Vector3Subtract((Vector3){entities[i].getPosition().x - entities[i].getHitbox().x/2,
                                                               entities[i].getPosition().y - entities[i].getHitbox().y/2,
-                                                              entities[i].getPosition().z - entities[i].getHitbox().z/2},
-                                  (Vector3){entities[i].getPosition().x + entities[i].getHitbox().x/2,
+                                                              entities[i].getPosition().z - entities[i].getHitbox().z/2},entities[i].getRotation()),
+                                  Vector3Add((Vector3){entities[i].getPosition().x + entities[i].getHitbox().x/2,
                                             entities[i].getPosition().y+ entities[i].getHitbox().y/2,
-                                            entities[i].getPosition().z + entities[i].getHitbox().z/2}};
+                                            entities[i].getPosition().z + entities[i].getHitbox().z/2},entities[i].getRotation())};
         entities[i].setBulletBox(tempBoundingBox);
 
     }

@@ -29,7 +29,7 @@ int screenHeight;
 void DrawLoadingScreen();
 void DrawMainMenu(Vector2 mousePos);
 void DrawNestedMenu(Rl_Rectangle btnRect);
-void DrawTextureInFrontOfCamera(Camera camera, Texture2D texture, Vector3 position, float size);
+
 
 int main(void)
 {
@@ -104,13 +104,9 @@ int main(void)
     float frameTime = 0.0f;
     BoundingBox tempPlayerBox;
     Vector2 adjustedMouseDelta;
+    float crosshairDimension = 8.0f;
     while (!WindowShouldClose()){
-        //increment ticks
-//        if(tick%60 == 0){
-//            tick = 1;
-//        }else{
-//            tick +=1;
-//        }
+
 
         if(initLoading){
             BeginDrawing();
@@ -228,9 +224,7 @@ int main(void)
             float alpha = accumulator / TICK_RATE;
             Vector3 interpolatedPosition = Vector3Lerp(prevPosition, temp.getPosition(), alpha);
             Vector3 interpolatedCamTarget = Vector3Lerp(prevCamera.target,temp.getCamera()->target,alpha);
-            if(hands.id == 0){
-                cout << "FUCK" << endl;
-            }
+
 
             //begin rendering
             BeginDrawing();
@@ -292,6 +286,8 @@ int main(void)
             //TODO : ammo count current weapon equipped hp
             //TODO : swapping gun animations knife animations shooting animations
             BeginBlendMode(BLEND_ALPHA);
+            DrawRectangle(screenWidth/2.0f,(screenHeight/2.0f)-crosshairDimension/2,crosshairDimension/4,crosshairDimension+crosshairDimension/4,{150,220,255,255});
+            DrawRectangle((screenWidth/2.0f)-crosshairDimension/2,screenHeight/2.0f,crosshairDimension+crosshairDimension/4,crosshairDimension/4,{150,220,255,255});
             DrawTexturePro(hands,{0.0f,0.0f,(float)hands.width,(float)hands.height},
                            {0,(float)screenHeight/2.0f,(float)screenWidth,(float)screenHeight/2.0f},
                            {0,0},0.0f,WHITE);

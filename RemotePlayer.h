@@ -9,6 +9,12 @@
 #import "raylib.h"
 #import "raymath.h"
 #import "Bullet.h"
+struct State{
+    Vector3 temp_position;
+    Vector3 temp_facing;
+    int temp_uid; //TODO change
+
+};
 class RemotePlayer {
 public:
     RemotePlayer(Vector3 position, Vector3 facing, int uid, Vector3 hitbox){
@@ -21,11 +27,11 @@ public:
                                     position.y - hitbox.y/2-1.0f,
                                     position.z - hitbox.z/2};
     }
-    //TODO:
-    //void addState(State temp);
-    //State pullState();
+
+    void addState(State temp);
+    State pullState();
 private:
-    //TODO: Buffer of states
+    vector<State> stateBuffer;
     Vector3 position{};
     Vector3 facing{};
     int uid;

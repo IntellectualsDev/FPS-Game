@@ -74,3 +74,7 @@ void Bullet::setSweptBulletBox(BoundingBox temp) {
 BoundingBox Bullet::getSweptBulletBox() {
     return sweptBulletBox;
 }
+
+Vector3 Bullet::getRotation() {
+    return rotation;
+}
