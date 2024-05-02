@@ -84,7 +84,7 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     velocity = grounded? Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},lateralSpeed+fabs(velocity.y)*airSpeed*5)) :
                          Vector3Add(velocity, Vector3Scale((Vector3){(float)(w-s),0.0f,(float)(d-a)},airSpeed*fabs(velocity.y)+0.05f));
     velocity = Vector3Add(velocity,Vector3Multiply((Vector3){(float)sprint,0.0f,(float)sprint}, Vector3Scale(velocity,lateralSpeed)));
-    cout << velocity.y << endl;
+
     if((!crouch || !sprint)&& sliding){
         sliding = false;
         camera.up = {0.0f , 1.0f, 0.0f};

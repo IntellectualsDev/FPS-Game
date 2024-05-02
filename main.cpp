@@ -105,6 +105,8 @@ int main(void)
     quitBtnRect = { 100, 440, 200, 50 };
     accountBtnRect = { 600, 20, 150, 50 };
     int tick = 1;
+    Model freddy = LoadModel("resources/freddy.gltf");
+
     Texture2D hands = LoadTexture("resources/hands.png");
     Vector3 handsPosition;
     SetTextureFilter(hands,TEXTURE_FILTER_BILINEAR);
@@ -226,8 +228,15 @@ int main(void)
                                   IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),*outputBuffer,tick);
 
                 if (++tick >= 60) tick = 0;
+                cout << temp.camera_direction(temp.getCamera()).x <<", " << temp.camera_direction(temp.getCamera()).z << endl;
                 accumulator -= TICK_RATE;
+//                cout <<  atan(temp.camera_direction(temp.getCamera()).x/temp.camera_direction(temp.getCamera()).z) << endl;
+                freddy.transform = MatrixRotateXYZ((Vector3) {0.0f, atan2(temp.camera_direction(temp.getCamera()).x,
+                                                                         temp.camera_direction(temp.getCamera()).z),
+                                                              0.0f});
+
             }
+
 //
 //            //TODO
 //            //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
@@ -250,6 +259,7 @@ int main(void)
             interpolatedCam.position = interpolatedPosition;
             interpolatedCam.target = interpolatedCamTarget;
             BeginMode3D(interpolatedCam);
+            DrawModel(freddy,(Vector3){0.0f,0.0f,0.0f},0.7f,WHITE);
 
 
 
@@ -323,6 +333,7 @@ int main(void)
             EndDrawing();
         }
     }
+    UnloadModel(freddy);
     UnloadTexture(hands);
     Rl_CloseWindow();        // Close window and OpenGL context
 
