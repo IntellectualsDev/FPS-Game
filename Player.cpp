@@ -33,6 +33,7 @@
 //it also has a vector of bullet entities that will be rendered in the main loop
 //once you pull out a packet look into the queue and see where the next position should be and interpolate to that position
 //this part requires the packet to contain the other clients dt in order to ensure you interpolate between snapshots correctly
+
 void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt, BoundingBox prevBoundingBox, vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,bool sprint,bool crouch,PacketBuffer& outputBuffer,int tick) {
 
     //always apply gravity
@@ -42,6 +43,9 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
     //if a character is not colliding with anything they have gravity ontop of their input velocity
     //if a player jumps they gain an impulse to their y velocity
     //TODO: decrease x and z velocity if jumps are successive
+    prevState.boundingBox = playerBox;
+    prevState.position = position;
+    prevState.velocity = velocity;
     if(tick == cooldownSlidingMax){
         cooldownSlidingMax = -1;
     }
@@ -143,7 +147,10 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
                             (Vector3){position.x + head_hitbox.x / 2.0f,
                                       position.y + head_hitbox.y/2.0f,
                                       position.z + head_hitbox.z / 2.0f}};
-
+    currState.position = position;
+    currState.velocity = velocity;
+    currState.boundingBox = playerBox;
+    //e = Vector3Divide(prevState.velocity)
     sweptAABB.min = Vector3Min(prevBoundingBox.min,playerBox.min);
     sweptAABB.max = Vector3Max(prevBoundingBox.max,playerBox.max);
 

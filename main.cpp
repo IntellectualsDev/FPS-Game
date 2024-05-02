@@ -67,13 +67,13 @@ int main(void)
 
     //TODO : create tiling so level design can be an easier workflow
     //init terrain vector
-    float wallWidth = 1.0f;
-    float wallHeight = 5.0f;
+    float wallWidth = 3.0f;
+    float wallHeight = 4.0f;
     float wallLength = 32.0f;
     float floorLength = 500.0f;
-    BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 2.5f - wallHeight/2, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, 2.0f + wallHeight/2, 0.0f +wallLength/2}};
-    BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 2.5f - wallHeight/2, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, 2.0f + wallHeight/2, 16.0f +wallWidth/2}};
+    BoundingBox wallBox1 = (BoundingBox){(Vector3){-16.0f - wallWidth/2, 0, 0.0f -wallLength/2},(Vector3){-16.0f + wallWidth/2, wallHeight, 0.0f +wallLength/2}};
+    BoundingBox wallBox2 = (BoundingBox){(Vector3){16.0f - wallWidth/2, 0, 0.0f -wallLength/2},(Vector3){16.0f + wallWidth/2, wallHeight, 0.0f +wallLength/2}};
+    BoundingBox wallBox3 = (BoundingBox){(Vector3){0.0f - wallLength/2, 0, 16.0f -wallWidth/2},(Vector3){0.0f + wallLength/2, wallHeight, 16.0f +wallWidth/2}};
     BoundingBox floorBox = (BoundingBox){(Vector3){-floorLength/2,-2,-floorLength/2},(Vector3){floorLength/2,0,floorLength/2}};
     vector<BoundingBox> terrainVector = {wallBox1,wallBox2,wallBox3,floorBox};
     BoundingBox topBox1 = (BoundingBox){(Vector3){-16.0f - 0.5+0.05f, 4.99f, 0.0f +0.05f-wallLength/2},(Vector3){-16.0f + 0.5-0.05f, 2.5f + wallHeight/2, 0.0f -0.05f+wallLength/2}};
@@ -284,10 +284,10 @@ int main(void)
             DrawBoundingBox(tempPlayerBox,PINK);
             //draw terrain and bullet entities
             //TODO render based on if it is in players FOV
-            DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ 50.0f, 50.0f }, LIGHTGRAY); // Draw ground
-            DrawCube((Vector3){ -16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, BLUE);     // Draw a blue wall
-            DrawCube((Vector3){ 16.0f, 2.5f, 0.0f }, 1.0f, 5.0f, 32.0f, LIME);      // Draw a green wall
-            DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, 5.0f, 1.0f, GOLD);      // Draw a yellow wall
+            DrawPlane((Vector3){ 0.0f, 0.0f, 0.0f }, (Vector2){ floorLength, floorLength }, LIGHTGRAY); // Draw ground
+            DrawCube((Vector3){ -16.0f, 2.5f, 0.0f }, 1.0f, wallHeight, 32.0f, BLUE);     // Draw a blue wall
+            DrawCube((Vector3){ 16.0f, 2.5f, 0.0f }, 1.0f, wallHeight, 32.0f, LIME);      // Draw a green wall
+            DrawCube((Vector3){ 0.0f, 2.5f, 16.0f }, 32.0f, wallHeight, 1.0f, GOLD);      // Draw a yellow wall
 
             for(auto & localPlayerBullet : localPlayerBullets){
 

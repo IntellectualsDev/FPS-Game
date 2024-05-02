@@ -21,24 +21,10 @@
 //TODO head body_hitbox
 
 using namespace std;
-struct FPSClientState {
-    float dt{};
-    Vector3 separationVector{};
-    bool topCollision = false;
-    float Gravity = -0.05;
-    float Jump = 0.8f;
-    bool grounded = false;
-    bool space;
-    BoundingBox playerBox{};
-    Vector3 hitBox{};
-    float coolDown = 0;
-    vector<Bullet> entities = {};
-    Camera3D camera = {0};
-    Vector3 position = (Vector3){0,2,1};
-    Vector3 velocity = (Vector3){0,0,0};
-    Vector3 hitbox = (Vector3){1.0f,2.0f,1.0f};
-    bool alive = true;
-    int cameraMode = CAMERA_FIRST_PERSON;
+struct playerState{
+    Vector3 velocity;
+    Vector3 position;
+    BoundingBox boundingBox;
 };
 class Player {
 
@@ -95,6 +81,9 @@ public:
                                                 position.y + head_hitbox.y/2.0f,
                                                 position.z + head_hitbox.z / 2.0f}};
         }
+        prevState.position = position;
+        prevState.velocity = velocity;
+        prevState.boundingBox = playerBox;
 //        outputBuffer = CircularBuffer<outputState>(); //size needs to be tick rate * transmission time
         //size needs to be max allowable rtt
     };
@@ -132,7 +121,8 @@ private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
     int cooldownSlidingMax = -1;
-
+    playerState prevState;
+    playerState currState;
     Vector3 crouchingOffset = {0.0f,-2.0f,0.0f};
     float fov;
     float roll = 10.0f;
