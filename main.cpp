@@ -42,7 +42,7 @@ void DrawNestedMenu(Rl_Rectangle btnRect);
 int main(void)
 {
     serverIP ="192.168.1.13";
-    clientIP = "192.168.56.1";
+    clientIP ="192.168.56.1";
     //init enet
     if (enet_initialize() != 0) {
         std::cerr << "Failed to initialize ENet\n";
@@ -52,9 +52,9 @@ int main(void)
 
     //init buffers and threads for transmitting and recieving packets
     auto* outputBuffer = new PacketBuffer;
-//    Transmitter transmitter(clientIP,5452,outputBuffer,consoleMutex,serverIP,5450);
-//    auto* inputBuffer = new PacketBuffer;
-//    Gateway gateway(clientIP,5453,inputBuffer);
+    Transmitter transmitter(clientIP,5452,outputBuffer,consoleMutex,serverIP,5450);
+    auto* inputBuffer = new PacketBuffer;
+    Gateway gateway(clientIP,5453,inputBuffer);
 
     //TODO
     //implement join sequence
@@ -95,8 +95,8 @@ int main(void)
     vector<Bullet>& localPlayerBullets = *temp.getEntities();
     //Main Loop
     //START THE TRANSMITTER AND GATEWAY
-//    transmitter.start();
-//    gateway.start();
+    transmitter.start();
+    gateway.start();
     //init menu button hitboxes
     singlePlayerBtnRect = { 100, 200, 200, 50 };
     multiPlayerBtnRect = { 100, 260, 200, 50 };
@@ -105,8 +105,8 @@ int main(void)
     quitBtnRect = { 100, 440, 200, 50 };
     accountBtnRect = { 600, 20, 150, 50 };
     int tick = 1;
-    Model freddy = LoadModel("resources/freddy.gltf");
-
+    Model freddy = LoadModel("resources/freddyDir/freddy.gltf");
+    Model phil = LoadModel("resources/philDir/scene.gltf");
     Texture2D hands = LoadTexture("resources/hands.png");
     Vector3 handsPosition;
     SetTextureFilter(hands,TEXTURE_FILTER_BILINEAR);
@@ -203,7 +203,7 @@ int main(void)
                 packetBuilder.add_reliable(false);
                 packetBuilder.add_dest_point(dest);
                 packetBuilder.add_source_point(src);
-                packetBuilder.add_packet_type(PacketType_Input);
+                packetBuilder.add_packet_type(PacketType_InputHistory);
                 packetBuilder.add_client_id(0);
                 packetBuilder.add_lobby_number(0);
                 packetBuilder.add_client_tick(ticked);
@@ -219,7 +219,7 @@ int main(void)
                 // Create an ENetPacket from the serialized data
                 std::unique_ptr<ENetPacket>finalPacket(enet_packet_create(buffer, bufferSize, flags));
                 //add packet to output buffer
-//                outputBuffer->addPacket(std::move(finalPacket));
+                outputBuffer->addPacket(std::move(finalPacket));
                 //TODO!!!!!!!!!!!!!!
                 //keep track of predicted state(deltas) and upon receiving and parsing the state from the server check against the corresponding predicted state
                 //if they match continue but if they do not match return to last approved state and add predicted deltas to said state to get new current state.
@@ -228,12 +228,14 @@ int main(void)
                                   IsKeyDown(KEY_LEFT_SHIFT), IsKeyDown(KEY_LEFT_CONTROL),*outputBuffer,tick);
 
                 if (++tick >= 60) tick = 0;
-                cout << temp.camera_direction(temp.getCamera()).x <<", " << temp.camera_direction(temp.getCamera()).z << endl;
                 accumulator -= TICK_RATE;
 //                cout <<  atan(temp.camera_direction(temp.getCamera()).x/temp.camera_direction(temp.getCamera()).z) << endl;
                 freddy.transform = MatrixRotateXYZ((Vector3) {0.0f, atan2(temp.camera_direction(temp.getCamera()).x,
                                                                          temp.camera_direction(temp.getCamera()).z),
                                                               0.0f});
+//                phil.transform = MatrixRotateXYZ((Vector3) {0.0f, atan2(temp.camera_direction(temp.getCamera()).x,
+//                                                                          temp.camera_direction(temp.getCamera()).z),
+//                                                              0.0f});
 
             }
 
@@ -260,7 +262,7 @@ int main(void)
             interpolatedCam.target = interpolatedCamTarget;
             BeginMode3D(interpolatedCam);
             DrawModel(freddy,(Vector3){0.0f,0.0f,0.0f},0.7f,WHITE);
-
+            DrawModel(phil,(Vector3){2.0f,2.45f,2.0f},0.025f,WHITE);
 
 
 

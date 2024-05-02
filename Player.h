@@ -121,6 +121,8 @@ private:
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
     int cooldownSlidingMax = -1;
+    int jumpCoolDown = 0.0f;
+    bool firstJump=false;
     playerState prevState;
     playerState currState;
     Vector3 crouchingOffset = {0.0f,-2.0f,0.0f};

@@ -57,13 +57,15 @@ void Gateway::networkLoop() {
     ENetEvent event;
     printf("Network Loop Initialized\n");
     while(!shutdownFlag.load()){
-        while(enet_host_service(client, &event,0) > 0){
+        while(enet_host_service(client, &event,15000) > 0){
             switch(event.type){
                 case ENET_EVENT_TYPE_RECEIVE:{
                     auto ODPacket = GetOD_Packet(event.packet->data);
                     if(!ODPacket){
                         cerr << "Invalid Packet: No serial Data" << endl;
                         break;
+                    }else{
+                        cout << " recieved packet in gateway" << endl;
                     }
                     receiveBuffer->addPacket(std::unique_ptr<ENetPacket>(event.packet));
                     break;

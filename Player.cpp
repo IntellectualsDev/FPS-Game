@@ -74,6 +74,18 @@ void Player::UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool
         crouching = false;
         lateralSpeed = lateralSpeed*3.0f;
     }
+//    if(character == "scout"){
+//        if(!firstJump && space){
+//            firstJump = true;
+//
+//        }
+//
+//        if(firstJump){
+//            jumpCoolDown+=dt;
+//        }else{
+//            jumpCoolDown = 0.0f;
+//        }
+//    }
     if(velocity.y == 0.0f){
         velocity = Vector3Add(velocity, Vector3Scale(Jump,(float)space));
     }

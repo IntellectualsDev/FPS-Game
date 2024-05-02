@@ -34,6 +34,7 @@ private:
     void transmitPacket(unique_ptr<ENetPacket> packet);
     string serverIP;
     int serverPort;
+    ENetPeer * server;
     ENetHost* client;
     ENetAddress address;
 //    vector<ENetPeer *> peers;

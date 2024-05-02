@@ -20,22 +20,22 @@ table OD_BoundingBox {
 
 // Define the enums. ALL RELIABLE except for Input & DifferentialState, ad GlobalState
 enum PacketType : byte {
-    // Client --> Server
-    CreateLobby,
-    Join,
-    Start,
-    Input,
-    Leave,
-    CreateLobbyResult,
-
-    //Server --> Client
-    StartResult,
-    JoinResult,
-    LeaveResult,
-    GlobalState, //TODO: send global snapshot every so often
-    DifferentialState, // TODO: portions of this will be null (so not sent/encoded)
-    Timeout,
-    Revert, //TODO: If there is packet loss, send this packet with the last ack'ed (full state) so client can revert back to this state
+// Client --> Server
+CreateLobby,
+Join,
+Start,
+Input,
+InputHistory,
+Leave,
+CreateLobbyResult,
+//Server --> Client
+StartResult,
+JoinResult,
+LeaveResult,
+GlobalState, //TODO: send global snapshot every so often
+DifferentialState, // TODO: portions of this will be null (so not sent/encoded)
+Timeout,
+Revert, //TODO: If there is packet loss, send this packet with the last ack'ed (full state) so client can revert back to this state
 }
 
 table SourcePoint {
@@ -129,21 +129,12 @@ table ClientStates {
 }
 
 // These will generate a vector of states for a client, we need each client's vector
-union StatesOptions{
-    ClientInputs,
-    ClientStates,
-}
-
-table States {
-    state: StatesOptions;
-}
-
 table AllPlayerDeltas {
-    payload:[States];
+    payload:[ClientStates];
 }
 
 table AllPlayerSnapshots {
-    payload:[States];
+    payload:[ClientStates];
 }
 
 union PayloadTypes{

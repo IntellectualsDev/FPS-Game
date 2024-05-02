@@ -23,8 +23,7 @@ void PacketBuffer::addPacket(unique_ptr<ENetPacket> packet) {
         numberOfPackets++;
 
         const auto* od_Packet = flatbuffers::GetRoot<OD_Packet>(packetQueue.front().get()->data);
-        cout << "Packet received in Buffer with Packet Type: " << EnumNamePacketType(od_Packet->packet_type()) << endl;
-        cout << (od_Packet->payload()->payload_CI()->client_inputs()->Get(0)->tick()->tick_number()) << endl;
+//        cout << "Packet received in Buffer with Packet Type: " << EnumNamePacketType(od_Packet->packet_type()) << endl;
         while(packetQueue.empty()){
 
         }
@@ -62,12 +61,12 @@ unique_ptr<ENetPacket> PacketBuffer::removePacket() {
 
     auto packet = std::move(packetQueue.front()); // pull out the packet
     if(packetQueue.front() != nullptr){
-        cout << "before pop packetqueue.front is not nulltpr" << endl;
+//        cout << "before pop packetqueue.front is not nulltpr" << endl;
     }
     packetQueue.pop();
     if(packetQueue.front() != nullptr){
-        cout << "after pop packetqueue.front is not nulltpr" << endl;
-        cout << packetQueue.size() << endl;
+//        cout << "after pop packetqueue.front is not nulltpr" << endl;
+//        cout << packetQueue.size() << endl;
     }
     numberOfPackets--;
     if(packet == nullptr){

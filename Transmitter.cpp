@@ -25,7 +25,7 @@ Transmitter::Transmitter(string gatewayIP,
 //        printf("char array for Gateway Server = %s\n", serverAddressChar);
 
     enet_address_set_host_ip(&address, clientAddressChar.data());
-    client = enet_host_create(NULL,2,1,0,0);
+    client = enet_host_create(nullptr,2,1,0,0);
 
     if (client == nullptr) {
         fprintf(stderr, "An error occurred while trying to create Transmitter Client ENetHost instance\n");
@@ -49,6 +49,7 @@ void Transmitter::shutdown() {
 }
 
 void Transmitter::transmitLoop() {
+    server = connect("192.168.1.13", 5450);
     while(!shutdownFlag.load()){
         auto bufferHandler = transmitBuffer->removePacket();
         if(bufferHandler != nullptr){
@@ -62,9 +63,9 @@ void Transmitter::transmitLoop() {
 }
 
 void Transmitter::transmitPacket(std::unique_ptr<ENetPacket> packet){
-    cout <<"in transmitpacket" << endl;
+//    cout <<"in transmitpacket" << endl;
     ENetEvent event;
-    ENetPeer * server;
+
 //    ENetPacket* packetToSend;
 
 //    const OD_Packet* OD_Packet = packet->data;
@@ -72,7 +73,7 @@ void Transmitter::transmitPacket(std::unique_ptr<ENetPacket> packet){
 
     auto od_Packet = flatbuffers::GetRoot<OD_Packet>(byteBuffer);
 
-    server = connect(od_Packet->dest_point()->address()->str(), od_Packet->dest_point()->port());
+//    server = connect(od_Packet->dest_point()->address()->str(), od_Packet->dest_point()->port());
 
     if (server == nullptr) {
         cout << "Error connecting to server" << endl;
@@ -99,9 +100,7 @@ void Transmitter::transmitPacket(std::unique_ptr<ENetPacket> packet){
     enet_host_service(client, & event, 0);
     ENetPacket * raw = packet.release();
 //    ENetPacket* packetToSend = enet_packet_create(packet->getByteView(), packet->getSize(), flags);
-    cout << "about to send" << endl;
     enet_peer_send(server, 0, raw);
-    cout << "sent" << endl;
     enet_host_flush(client);
 
 
@@ -129,7 +128,7 @@ ENetPeer * Transmitter::connect(const std::string &clientIP, int port) {
 
         //TODO: add error checking or create a flag
     }
-    if(enet_host_service(client, &event, 3000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT){
+    if(enet_host_service(client, &event, 15000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT){
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
             fprintf(stdout, "Game Server Connected to the Client %s:%d successfully\n\t", clientIP.c_str(), port);
@@ -137,7 +136,12 @@ ENetPeer * Transmitter::connect(const std::string &clientIP, int port) {
         return server;
     }
     else{
-        enet_peer_reset(server);
+        if(server != nullptr){
+            enet_peer_reset(server);
+
+        }else{
+            cout << "server is null" << endl;
+        }
         {
             std::lock_guard<std::mutex> guard(consoleMutex);
             fprintf(stderr, "Game Server failed to connect to Client\n\tIP: %s\n\tPort: %d\n", clientIP.c_str(), port);
