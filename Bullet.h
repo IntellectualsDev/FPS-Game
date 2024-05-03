@@ -24,12 +24,28 @@ public:
         speed = temp_speed;
         prevPosition = position;
         rotation = rotation;
-        setBulletBox((BoundingBox){Vector3Subtract((Vector3){position.x - hitbox.x/2,
-                                             position.y - hitbox.y/2,
-                                             position.z - hitbox.z/2},rotation),
-                                   Vector3Add((Vector3){position.x + hitbox.x/2,
-                                             position.y+ hitbox.y/2,
-                                             position.z + hitbox.z/2},rotation)});
+//        float yaw = atan2(rotation.x, rotation.z);
+//        float pitch = atan2(-rotation.y, sqrt(rotation.x*rotation.x + rotation.z*rotation.z));
+//
+//        bulletModel = LoadModelFromMesh(GenMeshCube(0.5f, 0.5f, 4.5f)); // Creates a unit cube
+//        bulletModel.transform = MatrixRotateXYZ((Vector3){pitch, yaw, 0.0f});
+        Vector3 direction = Vector3Normalize(rotation);  // Assuming 'rotation' is the direction vector
+
+        // Default Z-axis
+        Vector3 defaultForward = {0.0f, 0.0f, 1.0f};
+
+        // Compute rotation axis and angle
+        Vector3 rotAxis = Vector3CrossProduct(defaultForward, direction);
+        float angle = acos(Vector3DotProduct(defaultForward, direction));
+        rotAxis = Vector3Normalize(rotAxis);
+
+        // Load the cube model as a rectangular prism
+        bulletModel = LoadModelFromMesh(GenMeshCube(0.1f, 0.1f, 4.5f)); // Creates a rectangular prism
+
+        // Apply rotation
+        bulletModel.transform = MatrixRotate(rotAxis, angle);
+        setBulletBox((BoundingBox){Vector3Subtract(position, Vector3Scale(hitbox, 0.5f)),
+                                   Vector3Add(position, Vector3Scale(hitbox, 0.5f))});
     }
 
     void UpdatePosition(float x, float y,float z);
@@ -48,6 +64,7 @@ public:
     BoundingBox getSweptBulletBox();
     Vector3 getRotation();
 private:
+    Matrix rotationMatrix;
     Vector3 rotation{};
     BoundingBox sweptBulletBox{};
     float speed;

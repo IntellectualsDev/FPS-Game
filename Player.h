@@ -12,6 +12,7 @@
 #include <iostream>
 #include "Bullet.h"
 #include "vector"
+#include <random>
 
 
 #endif
@@ -25,6 +26,29 @@ struct playerState{
     Vector3 velocity;
     Vector3 position;
     BoundingBox boundingBox;
+};
+struct gun{
+    string name;
+    string type;
+    float velocity;
+    float rate;
+    int maxAmmo;
+    int currAmmo;
+    bool out;
+    float reloadTime = 1.6f;
+};
+struct bulletHole{
+    Vector3 position;
+    float ttl = 16.0f;
+};
+struct target{
+    Vector3 position;
+    Vector3 head_hitbox = (Vector3){0.5f,0.5f,0.5f};
+    BoundingBox headBox;
+    Vector3 body_hitbox = (Vector3){1.0f,3.0f,1.0f};
+    BoundingBox bodyBox;
+    int hp = 200;
+
 };
 class Player {
 
@@ -46,7 +70,7 @@ public:
         camera.projection = CAMERA_PERSPECTIVE;
         alive = true;
         JumpTimer = 0.0f;
-
+        currGun = 0;
 
         sens = 0.391f;
         //TODO differentiate characters
@@ -65,6 +89,35 @@ public:
                                     (Vector3){position.x + head_hitbox.x / 2.0f,
                                               position.y + head_hitbox.y/2.0f,
                                               position.z + head_hitbox.z / 2.0f}};
+            maxHealth = 150;
+            lateralSpeed = 0.05f;
+            gun AR;
+            AR.name = "Assult Rifle";
+            AR.type = "primary";
+            AR.velocity = 10.0f;
+            AR.rate = 0.1f;
+            AR.maxAmmo = 30;
+            AR.currAmmo = AR.maxAmmo;
+            AR.out = false;
+            inventory[0] = AR;
+            gun revolver;
+            revolver.name = "Pistol";
+            revolver.type = "secondary";
+            revolver.velocity = 10.0f;
+            revolver.rate = 0.3f;
+            revolver.maxAmmo = 10;
+            revolver.currAmmo = revolver.maxAmmo;
+            revolver.out = false;
+            inventory[1] = revolver;
+            gun sword;
+            sword.name = "Knife";
+            sword.type = "melee";
+            sword.velocity = 0.0f;
+            sword.rate = 0.1f;
+            sword.maxAmmo = -1;
+            sword.currAmmo =-1;
+            sword.out = false;
+            inventory[2] = sword;
         }else if(temp_character == "heavy"){
             body_hitbox = (Vector3){1.0f,2.0f,1.0f};
             playerBox = (BoundingBox){(Vector3){position.x - body_hitbox.x / 2.0f,
@@ -80,7 +133,11 @@ public:
                                       (Vector3){position.x + head_hitbox.x / 2.0f,
                                                 position.y + head_hitbox.y/2.0f,
                                                 position.z + head_hitbox.z / 2.0f}};
+            maxHealth = 250;
+
+            lateralSpeed = 0.025f;
         }
+        currentHealth = maxHealth;
         prevState.position = position;
         prevState.velocity = velocity;
         prevState.boundingBox = playerBox;
@@ -92,7 +149,7 @@ public:
     Vector3 camera_direction(Camera *tcamera);
     void UpdatePlayer(bool w, bool a, bool s, bool d,Vector2 mouseDelta,bool shoot,bool space,float dt,
                       BoundingBox prevBoundingBox,vector<BoundingBox> &terrainList,vector<BoundingBox> &topBoxVector,
-                      bool sprint,bool crouch,PacketBuffer& outputBuffer, int tick);
+                      bool sprint,bool crouch, int tick,float scroll,bool reload,bool shootHold);
     Camera3D * getCamera();
     Vector3 getBodyHitBox();
     Vector3 getHeadHitBox();
@@ -109,6 +166,16 @@ public:
     void setPosition(Vector3 temp);
     void setSens(float temp);
     float getSense();
+    int getCurrentHealth();
+    int getMaxHealth();
+    array<gun,3> getInventory();
+    int getCurrGun();
+    void setInventory(int index, gun weapon);
+    bool getReloading();
+    vector<bulletHole> getBulletHoles();
+    vector<target> getTargets();
+    void updateTargets();
+    void initTargets(int n);
 
 //
 //    CircularBuffer<outputState>* getOutputBuffer(){
@@ -118,10 +185,17 @@ public:
 //        return &inputBuffer;
 //    }
 private:
+    vector<target> targets = {};
+    float reloadTime = 0.0f;
+    bool reloading = false;
 //    CircularBuffer<outputState> outputBuffer;
 //    CircularBuffer<inputState> inputBuffer;
+    vector<bulletHole> bulletHoles = {};
     int cooldownSlidingMax = -1;
-    int jumpCoolDown = 0.0f;
+    int currentHealth;
+    int maxHealth;
+    int currGun;
+    array<gun,3> inventory;
     bool firstJump=false;
     playerState prevState;
     playerState currState;
@@ -136,7 +210,7 @@ private:
     Vector3 separationVector{};
     Vector3 Gravity = {0.0f,-0.03f,0.0f};
     Vector3 Jump = {0.0f,0.8f,0.0f};
-    float lateralSpeed = 0.05f;
+    float lateralSpeed;
     float airSpeed = 0.01f;
     bool grounded = false;
     BoundingBox playerBox{};
