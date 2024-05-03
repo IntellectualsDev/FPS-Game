@@ -5,19 +5,17 @@
 #include "Gateway.h"
 #include "BufferHandler.h"
 
-Gateway::Gateway(string gatewayIP, int gatewayPort, PacketBuffer& buffer): receiveBuffer(buffer) {
-    char* serverAddressChar = new char[gatewayIP.length()+1];
-    strcpy(serverAddressChar, gatewayIP.c_str());
-    printf("char array for Gateway Server = %s\n", serverAddressChar);
-    enet_address_set_host_ip(&address, serverAddressChar);
-    address.port = gatewayPort;
-    port = gatewayPort;
-    client = enet_host_create(&address,2,1,0,0);
-    if (client == NULL) {
-        fprintf(stderr, "An error occurred while trying to create Gateway Server ENetHost instance\n");
+Gateway::Gateway(string gatewayIP, int gatewayPort, PacketBuffer* buffer): receiveBuffer(buffer) {
+    enet_address_set_host(&clientAddress, gatewayIP.c_str());
+    clientAddress.port = gatewayPort;
+
+    client = enet_host_create(&clientAddress, 32, 2, 0, 0);
+    if (client == nullptr) {
+        std::cerr << "Failed to create Gateway Instance.\n";
         exit(EXIT_FAILURE);
+    }else{
+        cout << "Created Gateway Instance" << endl;
     }
-    printf("Created Gateway Server ENetHost  instance @ %x:%u\n", client->address.host, client->address.port);
 }
 
 Gateway::~Gateway() {
@@ -36,11 +34,11 @@ void Gateway::shutdown() {
 }
 
 const ENetAddress &Gateway::getAddress() const {
-    return address;
+    return clientAddress;
 }
 
 int Gateway::getPort() const {
-    return port;
+    return clientPort;
 }
 
 const atomic<bool> &Gateway::getShutdownFlag() const {
@@ -52,25 +50,24 @@ const map<string, pair<string, ENetPeer *>> &Gateway::getServerList() const {
 }
 
 void Gateway::networkLoop() {
-    if(client == NULL){
+    if(client == nullptr){
         fprintf(stderr, "Gateway was not initialized. No ENetHost exists.\n");
         exit(EXIT_FAILURE);
     }
     ENetEvent event;
     printf("Network Loop Initialized\n");
     while(!shutdownFlag.load()){
-        while(enet_host_service(client, &event,0) > 0){
+        while(enet_host_service(client, &event,15000) > 0){
             switch(event.type){
                 case ENET_EVENT_TYPE_RECEIVE:{
                     auto ODPacket = GetOD_Packet(event.packet->data);
                     if(!ODPacket){
                         cerr << "Invalid Packet: No serial Data" << endl;
                         break;
+                    }else{
+                        cout << " recieved packet in gateway" << endl;
                     }
-                    std::unique_ptr<uint8_t[]> bufferCopy(new uint8_t[event.packet->dataLength]);
-                    memcpy(bufferCopy.get(), event.packet->data, event.packet->dataLength);
-                    unique_ptr<BufferHandler> packetBufferHandler = std::make_unique<BufferHandler>(std::move(bufferCopy), event.packet->dataLength);
-                    receiveBuffer.addBufferHandler(std::move(packetBufferHandler));
+                    receiveBuffer->addPacket(std::unique_ptr<ENetPacket>(event.packet));
                     break;
                 }
                 case ENET_EVENT_TYPE_NONE:
@@ -87,4 +84,3 @@ void Gateway::networkLoop() {
     }
 
 }
-

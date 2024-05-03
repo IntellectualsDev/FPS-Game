@@ -1,36 +1,52 @@
 //
-// Created by Joseph on 3/18/2024.
+// Created by Anshul Gowda on 2/24/24.
 //
 
-#ifndef FPS_GAME_TRANSMITTER_H
-#define FPS_GAME_TRANSMITTER_H
+#ifndef ODYSSEYGAMESERVER_TRANSMITTER_H
+#define ODYSSEYGAMESERVER_TRANSMITTER_H
+
 #include <thread>
 #include <map>
-#include <enet/enet.h>
-#include <atomic>
+
 #include "PacketBuffer.h"
-#include "DevEnv/flatbuffers/include/flatbuffers/flatbuffer_builder.h"
+#include "flatbuffers/buffer.h"
+
+
 class Transmitter {
 public:
-    Transmitter(const string& temp_address, int port, PacketBuffer& transmitBuffer,mutex& consoleMutex);
+    Transmitter(string gatewayIP,
+                int port,
+                PacketBuffer *transmitBuffer,
+                mutex& consoleMutex,string serverIP,int serverPort);
+
     void start();
+
     void shutdown();
-    PacketBuffer& getPacketBuffer();
+
+
+
 
 private:
-    ENetPeer* server;
-    flatbuffers::FlatBufferBuilder builder;
-    bool connect(const string& serverIP,int port);
+    // Pass down in GatewayServer constructor
     void transmitLoop();
+    ENetPeer * connect(const string& serverIP, int port);
+    bool disconnect(const string& server);
     void transmitPacket(unique_ptr<ENetPacket> packet);
+    string serverIP;
+    int serverPort;
+    ENetPeer * server;
     ENetHost* client;
     ENetAddress address;
+//    vector<ENetPeer *> peers;
     int port;
-    std::thread transmitThread;
-    std::atomic<bool> shutdownFlag;
-    PacketBuffer& transmitBuffer;
-    mutex &consoleMutex;
+
+    thread transmitThread;
+    atomic<bool> shutdownFlag;
+
+    PacketBuffer* transmitBuffer;
+
+    std::mutex& consoleMutex;
 };
 
 
-#endif //FPS_GAME_TRANSMITTER_H
+#endif //ODYSSEYGAMESERVER_TRANSMITTER_H

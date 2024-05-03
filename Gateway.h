@@ -10,7 +10,7 @@
 #include "PacketBuffer.h"
 class Gateway {
 public:
-    Gateway(string gatewayIP, int gatewayPort, PacketBuffer& buffer);
+    Gateway(string gatewayIP, int gatewayPort, PacketBuffer* buffer);
     ~Gateway();
     void start();
     void shutdown();
@@ -21,14 +21,14 @@ public:
 private:
     void networkLoop();
     ENetHost* client;
-    ENetAddress address;
-    int port;
+    ENetAddress clientAddress;
+    int clientPort;
 
     thread networkThread;
     mutex networkMutex;
     condition_variable networkCV;
     atomic<bool> shutdownFlag;
-    PacketBuffer& receiveBuffer;
+    PacketBuffer* receiveBuffer;
     map<string,pair<string,ENetPeer*>> serverList;//implement ttl
 };
 

@@ -20,22 +20,22 @@ table OD_BoundingBox {
 
 // Define the enums. ALL RELIABLE except for Input & DifferentialState, ad GlobalState
 enum PacketType : byte {
-    // Client --> Server
-    CreateLobby,
-    Join,
-    Start,
-    Input,
-    Leave,
-    CreateLobbyResult,
-
-    //Server --> Client
-    StartResult,
-    JoinResult,
-    LeaveResult,
-    GlobalState, //TODO: send global snapshot every so often
-    DifferentialState, // TODO: portions of this will be null (so not sent/encoded)
-    Timeout,
-    Revert, //TODO: If there is packet loss, send this packet with the last ack'ed (full state) so client can revert back to this state
+// Client --> Server
+CreateLobby,
+Join,
+Start,
+Input,
+InputHistory,
+Leave,
+CreateLobbyResult,
+//Server --> Client
+StartResult,
+JoinResult,
+LeaveResult,
+GlobalState, //TODO: send global snapshot every so often
+DifferentialState, // TODO: portions of this will be null (so not sent/encoded)
+Timeout,
+Revert, //TODO: If there is packet loss, send this packet with the last ack'ed (full state) so client can revert back to this state
 }
 
 table SourcePoint {
@@ -48,7 +48,7 @@ table DestPoint {
 }
 // for both the client and server
 table Tick{
-    tick_number: uint;
+    tick_number: int;
     dt: float;
     wrap_around: int;
 }
@@ -129,21 +129,12 @@ table ClientStates {
 }
 
 // These will generate a vector of states for a client, we need each client's vector
-union StatesOptions{
-    ClientInputs,
-    ClientStates,
-}
-
-table States {
-    state: StatesOptions;
-}
-
 table AllPlayerDeltas {
-    payload:[States];
+    payload:[ClientStates];
 }
 
 table AllPlayerSnapshots {
-    payload:[States];
+    payload:[ClientStates];
 }
 
 union PayloadTypes{
@@ -174,159 +165,3 @@ table OD_Packet {
 }
 
 root_type OD_Packet;
-
-/*
-// defined to mirror RayLib's Vector3 def
-table OD_Vector3 {
-    x: float;
-    y: float;
-    z: float;
-}
-
-table OD_Vector2 {
-    x: float;
-    y: float;
-}
-
-// defined to mirror RayLib's BoundingBox def
-table OD_BoundingBox {
-    min: OD_Vector3;
-    max: OD_Vector3;
-}
-
-//TODO: define a Raylib Model in the future (many dependencies need to be defined)
-
-// Define the enums. ALL RELIABLE except for Input & DifferentialState, ad GlobalState
-enum PacketType : byte {
-    // Client --> Server
-    CreateLobby,
-    Join,
-    Start,
-    Input,
-    Leave,
-    CreateLobbyResult,
-
-    //Server --> Client
-    StartResult,
-    JoinResult,
-    LeaveResult,
-    GlobalState, //TODO: send global snapshot every so often
-    DifferentialState, // TODO: portions of this will be null (so not sent/encoded)
-    Timeout,
-    Revert, //TODO: If there is packet loss, send this packet with the last ack'ed (full state) so client can revert back to this state
-}
-
-table SourcePoint {
-    address: string;
-    port: uint;
-}
-table DestPoint {
-    address: string;
-    port: uint;
-}
-// for both the client and server
-table Tick{
-    tick_number: uint;
-    dt: float;
-    wrap_around: int;
-}
-
-table OD_Camera3D {
-    position: OD_Vector3;
-    target: OD_Vector3;
-    up: OD_Vector3;
-    fovy: float;
-    projection: int;
-}
-
-// Define the contents of an Entity
-table Entity {
-    entity_id: uint;
-    entity_label: string;
-    position: OD_Vector3;
-    // facing: OD_Vector3; // velocity already encodes this, not needed
-    velocity: OD_Vector3;
-    alive: bool;
-    claimed: bool;
-}
-
-// Define the state of a Client
-table Client {
-    source_point: SourcePoint;
-    tick: Tick; // client never sends me their tick
-    rtt: float; // should be set only for the snapshot
-    client_uid: uint;
-    alive: bool;
-    sprint: bool;
-   // crouch: bool;
-    camera: OD_Camera3D;
-    grounded: bool;
-    cooldown: float;
-    position: OD_Vector3;
-    // facing: OD_Vector3; // the facing is stored within the camera object's target ??
-    velocity: OD_Vector3;
-    entities:[Entity];
-}
-
-table Input {
-    client_uid: uint;
-    w: bool;
-    a: bool;
-    s: bool;
-    d: bool;
-    mouse_delta: OD_Vector2;
-    shoot: bool;
-    space: bool;
-    dt: float;
-    previous_position: OD_Vector3;
-    sprint: bool;
-    crouch: bool;
-    //implement future support for sliding
-}
-
-table ClientInputs {
-    client_inputs:[Input];
-}
-
-table ClientStates {
-    rtt: float; // should be set only for the deltas
-    client_states:[Client];
-}
-
-// These will generate a vector of states for a client, we need each client's vector
-union StatesOptions{
-    ClientInputs,
-    ClientStates,
-}
-
-table States {
-    state: StatesOptions;
-}
-
-table AllPlayerDeltas {
-    payload:[States];
-}
-
-union PayloadTypes{
-    Input,
-    AllPlayerDeltas,
-    ClientStates
-}
-
-table Payload{
-    payload: PayloadTypes;
-}
-
-table OD_Packet {
-    packet_type: PacketType;
-    dest_client_id: int;
-    dest_point: DestPoint;
-    source_point: SourcePoint;
-    lobby_number :uint;
-    reliable: bool; //TODO: find a way to keep this out of the buffer (but have a way for the transmitter to check if it is reliable)
-    tick: Tick;
-    payload: Payload;
-}
-
-root_type OD_Packet;
-*/

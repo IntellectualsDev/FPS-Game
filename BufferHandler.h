@@ -1,7 +1,3 @@
-//
-// Created by Joseph on 3/19/2024.
-//
-
 #ifndef FPS_GAME_BUFFERHANDLER_H
 #define FPS_GAME_BUFFERHANDLER_H
 #include <memory>

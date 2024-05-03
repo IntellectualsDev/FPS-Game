@@ -1,10 +1,9 @@
 //
-// Created by Joseph on 3/18/2024.
+// Created by Anshul Gowda on 2/5/24.
 //
 
-#ifndef FPS_GAME_PACKETBUFFER_H
-#define FPS_GAME_PACKETBUFFER_H
-
+#ifndef ODYSSEYGAMESERVER_PACKETBUFFER_H
+#define ODYSSEYGAMESERVER_PACKETBUFFER_H
 
 #include <enet/enet.h>
 #include <iostream>
@@ -14,11 +13,12 @@
 #include <mutex>
 #include <queue>
 #include <memory>
-#include "BufferHandler.h"
+
 // Needed for manual building
 #include <functional>
 #include <atomic>
-#include "game_state_generated.h"
+
+
 
 
 using namespace std;
@@ -40,12 +40,11 @@ using namespace std;
  */
 
 
-
-using SubscriberCallback = function<void (const ENetPacket*)>;
+//using SubscriberCallback = function<void (const Packet*)>;
 
 class PacketBuffer {
 public:
-    PacketBuffer(mutex& consoleMutex);
+    PacketBuffer();
 //        ~PacketBuffer();
 
     // delete the copy constructor and copy assignment operator
@@ -57,10 +56,10 @@ public:
 
     // add to the buffer, (acquire the lock and add to end)
     void addPacket(unique_ptr<ENetPacket> packet);
-    void addBufferHandler(unique_ptr<BufferHandler> packet);
+
     // remove from the buffer, wait until not empty or shutdown & acquire the lock and pop from front
-    vector<unique_ptr<ENetPacket>> removePacketWait();
-    vector<unique_ptr<BufferHandler>> removePacketInstant();
+    unique_ptr<ENetPacket> removePacket();
+
     // wake all waiting threads
     void notifyAll();
 
@@ -70,13 +69,13 @@ public:
     void shutdown();
 
 private:
-    mutex& consoleMutex;
     int numberOfPackets;
     atomic<bool> shutdownFlag;
     mutex bufferMutex;
     condition_variable buffer_Condition;
+
+
     queue<unique_ptr<ENetPacket>> packetQueue;
-    queue<unique_ptr<BufferHandler>> packetQueueIn;
 };
 
-#endif
+#endif //ODYSSEYGAMESERVER_PACKETBUFFER_H

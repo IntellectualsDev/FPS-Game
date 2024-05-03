@@ -5,9 +5,11 @@
 #include "Bullet.h"
 
 void Bullet::UpdatePosition(float x, float y, float z) {
+    prevPosition = position;
     position.x = x;
     position.y = y;
     position.z = z;
+
 }
 
 Vector3 Bullet::getPosition() {
@@ -59,4 +61,20 @@ Model Bullet::getBulletModel() {
 
 float Bullet::getSpeed() {
     return speed;
+}
+
+Vector3 Bullet::getPrevPosition() {
+    return prevPosition;
+}
+
+void Bullet::setSweptBulletBox(BoundingBox temp) {
+    sweptBulletBox = temp;
+}
+
+BoundingBox Bullet::getSweptBulletBox() {
+    return sweptBulletBox;
+}
+
+Vector3 Bullet::getRotation() {
+    return rotation;
 }

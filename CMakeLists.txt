@@ -40,7 +40,7 @@ link_directories(/usr/local/bin)
 
 
 
-add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp game_state_generated.h game_state.fbs Transmitter.cpp Transmitter.h PacketBuffer.cpp PacketBuffer.h DummyClient.cpp DummyClient.h Gateway.cpp Gateway.h BufferHandler.h)
+add_executable(FPS-Game main.cpp Player.cpp Bullet.cpp game_state_generated.h game_state.fbs Transmitter.cpp Transmitter.h PacketBuffer.cpp PacketBuffer.h DummyClient.cpp DummyClient.h Gateway.cpp Gateway.h BufferHandler.h RemotePlayer.cpp RemotePlayer.h)
 
 target_link_libraries(${PROJECT_NAME} raylib)
 #target_link_libraries(${PROJECT_NAME} ${ENET_LIBRARY} ws2_32 winmm)
